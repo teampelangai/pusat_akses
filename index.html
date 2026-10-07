@@ -275,6 +275,8 @@
             const btnClient = document.getElementById('btnViewClient');
             const btnAdmin = document.getElementById('btnViewAdmin');
 
+            localStorage.setItem('active_app_view', mode);
+
             if(mode === 'client') {
                 clientSec.classList.remove('hidden');
                 adminSec.classList.add('hidden');
@@ -407,13 +409,22 @@
                 
                 if(db) {
                     try {
-                        await db.from('pc_sessions').update({ status: 'AVAILABLE', student_name: '' }).eq('id', currentClientPc);
+                        await db.from('pc_sessions').update({ 
+                            status: 'AVAILABLE', 
+                            student_name: '',
+                            student_class: '',
+                            purpose: '',
+                            end_time: null
+                        }).eq('id', currentClientPc);
                     } catch(e){}
                 }
 
                 if(pcSessions[currentClientPc]) {
                     pcSessions[currentClientPc].status = 'AVAILABLE';
                     pcSessions[currentClientPc].studentName = '';
+                    pcSessions[currentClientPc].studentClass = '';
+                    pcSessions[currentClientPc].purpose = '';
+                    pcSessions[currentClientPc].remainingSeconds = 0;
                 }
 
                 document.getElementById('clientMiniBarTimer').classList.add('hidden');
@@ -457,7 +468,7 @@
                 let timerText = (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
 
                 let infoHTML = '';
-                if(pc.status !== 'AVAILABLE') {
+                if(pc.status === 'ACTIVE' || pc.status === 'EXPIRED') {
                     infoHTML = '<div class="space-y-1 mb-3">' +
                                 '<h5 class="text-xs font-bold text-white truncate">' + (pc.studentName || 'Murid') + '</h5>' +
                                 '<p class="text-[11px] text-slate-400 font-medium">' + (pc.studentClass || '-') + ' • ' + (pc.purpose || '-') + '</p>' +
@@ -494,14 +505,34 @@
         async function stopAdminSession(pcNo) {
             if(db) {
                 try {
-                    await db.from('pc_sessions').update({ status: 'AVAILABLE', student_name: '' }).eq('id', pcNo);
-                } catch(e){}
+                    await db.from('pc_sessions').update({ 
+                        status: 'AVAILABLE', 
+                        student_name: '', 
+                        student_class: '', 
+                        purpose: '',
+                        end_time: null 
+                    }).eq('id', pcNo);
+                } catch(e){
+                    console.error("Ralat Reset Supabase:", e);
+                }
             }
             if(pcSessions[pcNo]) {
                 pcSessions[pcNo].status = 'AVAILABLE';
                 pcSessions[pcNo].studentName = '';
+                pcSessions[pcNo].studentClass = '';
+                pcSessions[pcNo].purpose = '';
                 pcSessions[pcNo].remainingSeconds = 0;
             }
+
+            // Padamkan simpanan tempatan jika PC yang di-reset adalah PC tempatan
+            const savedSession = localStorage.getItem('active_pc_session');
+            if (savedSession) {
+                const pcData = JSON.parse(savedSession);
+                if (pcData.pcNo === pcNo) {
+                    localStorage.removeItem('active_pc_session');
+                }
+            }
+
             renderAdminGrid();
         }
 
@@ -511,11 +542,21 @@
                     let id = "PC-" + (i < 10 ? '0' + i : i);
                     if(db) {
                         try {
-                            await db.from('pc_sessions').upsert({ id, pc_no: id, status: 'AVAILABLE', student_name: '' });
+                            await db.from('pc_sessions').upsert({ 
+                                id: id, 
+                                pc_no: id, 
+                                status: 'AVAILABLE', 
+                                student_name: '',
+                                student_class: '',
+                                purpose: '',
+                                end_time: null
+                            });
                         } catch(e){}
                     }
                     pcSessions[id].status = 'AVAILABLE';
                     pcSessions[id].studentName = '';
+                    pcSessions[id].studentClass = '';
+                    pcSessions[id].purpose = '';
                     pcSessions[id].remainingSeconds = 0;
                 }
                 localStorage.removeItem('active_pc_session');
@@ -523,7 +564,6 @@
             }
         }
 
-        // FUNGSI MEMBACA DATA AWAL SUPABASE
         async function fetchInitialSupabaseData() {
             if(!db) return;
             try {
@@ -535,14 +575,17 @@
                             pcSessions[item.id].studentName = item.student_name || '';
                             pcSessions[item.id].studentClass = item.student_class || '';
                             pcSessions[item.id].purpose = item.purpose || '';
-                            if(item.end_time) {
+                            if(item.end_time && item.status === 'ACTIVE') {
                                 let now = new Date();
                                 let end = new Date(item.end_time);
                                 let remaining = Math.max(0, Math.floor((end - now) / 1000));
                                 pcSessions[item.id].remainingSeconds = remaining;
-                                if(remaining === 0 && item.status === 'ACTIVE') {
+                                if(remaining === 0) {
                                     pcSessions[item.id].status = 'EXPIRED';
                                 }
+                            } else if (item.status === 'AVAILABLE') {
+                                pcSessions[item.id].remainingSeconds = 0;
+                                pcSessions[item.id].studentName = '';
                             }
                         }
                     });
@@ -553,7 +596,6 @@
             }
         }
 
-        // LISTEN REALTIME CHANGES
         function setupRealtimeListener() {
             if(!db) return;
             try {
@@ -562,13 +604,16 @@
                       const item = payload.new;
                       if(item && pcSessions[item.id]) {
                           pcSessions[item.id].status = item.status;
-                          pcSessions[item.id].studentName = item.student_name;
-                          pcSessions[item.id].studentClass = item.student_class;
-                          pcSessions[item.id].purpose = item.purpose;
-                          if(item.end_time) {
+                          pcSessions[item.id].studentName = item.student_name || '';
+                          pcSessions[item.id].studentClass = item.student_class || '';
+                          pcSessions[item.id].purpose = item.purpose || '';
+                          if(item.end_time && item.status === 'ACTIVE') {
                               let now = new Date();
                               let end = new Date(item.end_time);
                               pcSessions[item.id].remainingSeconds = Math.max(0, Math.floor((end - now) / 1000));
+                          } else if (item.status === 'AVAILABLE') {
+                              pcSessions[item.id].remainingSeconds = 0;
+                              pcSessions[item.id].studentName = '';
                           }
                           renderAdminGrid();
                       }
@@ -605,9 +650,15 @@
         }
 
         window.onload = async function() {
+            const savedView = localStorage.getItem('active_app_view');
             const urlParams = new URLSearchParams(window.location.search);
+            const viewParam = urlParams.get('view');
+
+            if (viewParam === 'admin' || savedView === 'admin') {
+                switchView('admin');
+            }
+
             const autoPc = urlParams.get('pc');
-            
             if (autoPc) {
                 const pcSelect = document.getElementById('clientPcNo');
                 if (pcSelect) {
