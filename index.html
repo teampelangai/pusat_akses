@@ -281,12 +281,11 @@
                                 <th class="p-3">Tahun / Kelas</th>
                                 <th class="p-3">Tujuan Penggunaan</th>
                                 <th class="p-3">Masa (Min)</th>
-                                <th class="p-3">Status</th>
                             </tr>
                         </thead>
                         <tbody id="logTableBody" class="divide-y divide-slate-700/50 text-slate-200">
                             <tr>
-                                <td colspan="8" class="text-center p-6 text-slate-500">Tiada rekod log penggunaan buat masa ini.</td>
+                                <td colspan="7" class="text-center p-6 text-slate-500">Tiada rekod log penggunaan buat masa ini.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -322,8 +321,22 @@
             };
         }
 
+        let usageHistory = [];
         let currentClientPc = "PC-05";
         let clientTimerInterval = null;
+
+        function loadHistoryFromStorage() {
+            const savedLogs = localStorage.getItem('pusat_akses_history_logs');
+            if (savedLogs) {
+                try {
+                    usageHistory = JSON.parse(savedLogs);
+                } catch(e) { usageHistory = []; }
+            }
+        }
+
+        function saveHistoryToStorage() {
+            localStorage.setItem('pusat_akses_history_logs', JSON.stringify(usageHistory));
+        }
 
         function switchView(mode) {
             const clientSec = document.getElementById('view-client');
@@ -365,6 +378,7 @@
             }
 
             const fullClassDetails = studentYear + " " + classNameInput;
+            const todayDate = new Date().toLocaleDateString('ms-MY', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
             window.onbeforeunload = function(e) {
                 const message = "Adakah anda pasti untuk meninggalkan halaman ini?";
@@ -387,6 +401,23 @@
                 endTime: endTime,
                 remainingSeconds: duration * 60
             };
+
+            // TAMBAH REKOD BARU KE DALAM SEJARAH LOKAL
+            const newLogEntry = {
+                date: todayDate,
+                pcNo: pcNo,
+                studentName: name,
+                studentClass: fullClassDetails,
+                purpose: purpose,
+                duration: duration
+            };
+            
+            // ELAK REKOD DUPLIKAT TERGANDA
+            const isDuplicate = usageHistory.some(h => h.pcNo === pcNo && h.studentName === name && h.date === todayDate);
+            if (!isDuplicate) {
+                usageHistory.push(newLogEntry);
+                saveHistoryToStorage();
+            }
 
             localStorage.setItem('active_pc_session', JSON.stringify({
                 pcNo, studentName: name, studentClass: fullClassDetails, purpose, duration, endTime
@@ -564,73 +595,57 @@
             document.getElementById('statAvailable').innerText = availCount;
             document.getElementById('statActive').innerText = activeCount;
             document.getElementById('statExpired').innerText = expiredCount;
-            document.getElementById('statTotalToday').innerText = activeCount + expiredCount;
+            document.getElementById('statTotalToday').innerText = usageHistory.length;
         }
 
-        // FUNGSI MEMAPARKAN JADUAL REKOD LOG IN-APP
+        // FUNGSI MEMAPARKAN JADUAL REKOD LOG
         function renderLogTable() {
             const tableBody = document.getElementById('logTableBody');
             if(!tableBody) return;
 
-            let logCount = 0;
             let rowsHTML = '';
 
-            Object.keys(pcSessions).forEach(pcNo => {
-                let pc = pcSessions[pcNo];
-                if(pc.studentName && pc.studentName !== '') {
-                    logCount++;
-                    let todayDate = new Date().toLocaleDateString('ms-MY');
-                    let statusBadge = pc.status === 'ACTIVE' 
-                        ? '<span class="text-blue-400 font-bold">AKTIF</span>' 
-                        : '<span class="text-rose-400 font-bold">TAMAT</span>';
-
-                    rowsHTML += `<tr class="hover:bg-slate-700/30">
-                        <td class="p-3 font-semibold">${logCount}</td>
-                        <td class="p-3">${todayDate}</td>
-                        <td class="p-3 font-bold text-indigo-400">${pc.pcNo}</td>
-                        <td class="p-3 font-bold">${pc.studentName}</td>
-                        <td class="p-3">${pc.studentClass || '-'}</td>
-                        <td class="p-3">${pc.purpose || '-'}</td>
-                        <td class="p-3">${pc.duration} Minit</td>
-                        <td class="p-3">${statusBadge}</td>
-                    </tr>`;
-                }
+            usageHistory.forEach((item, index) => {
+                rowsHTML += `<tr class="hover:bg-slate-700/30">
+                    <td class="p-3 font-semibold">${index + 1}</td>
+                    <td class="p-3">${item.date}</td>
+                    <td class="p-3 font-bold text-indigo-400">${item.pcNo}</td>
+                    <td class="p-3 font-bold">${item.studentName}</td>
+                    <td class="p-3">${item.studentClass || '-'}</td>
+                    <td class="p-3">${item.purpose || '-'}</td>
+                    <td class="p-3">${item.duration} Minit</td>
+                </tr>`;
             });
 
-            if(logCount === 0) {
-                tableBody.innerHTML = '<tr><td colspan="8" class="text-center p-6 text-slate-500">Tiada rekod log penggunaan buat masa ini.</td></tr>';
+            if(usageHistory.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="7" class="text-center p-6 text-slate-500">Tiada rekod log penggunaan buat masa ini.</td></tr>';
             } else {
                 tableBody.innerHTML = rowsHTML;
             }
         }
 
-        // FUNGSI MEMBUKA TAB BAHARU A4 KHAS UNTUK CETAKAN RASMI LOG (TANPA LAJUR STATUS)
+        // FUNGSI MEMBUKA TAB BAHARU A4 KHAS UNTUK CETAKAN RASMI LOG
         function openPrintTab() {
             let printWindow = window.open('', '_blank');
             let todayDate = new Date().toLocaleDateString('ms-MY', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
             let rowsHTML = '';
-            let logCount = 0;
 
-            Object.keys(pcSessions).forEach(pcNo => {
-                let pc = pcSessions[pcNo];
-                if(pc.studentName && pc.studentName !== '') {
-                    logCount++;
-                    rowsHTML += `
-                        <tr>
-                            <td style="text-align:center;">${logCount}</td>
-                            <td style="text-align:center;">${todayDate}</td>
-                            <td style="text-align:center; font-weight:bold;">${pc.pcNo}</td>
-                            <td style="text-transform:uppercase;">${pc.studentName}</td>
-                            <td>${pc.studentClass || '-'}</td>
-                            <td>${pc.purpose || '-'}</td>
-                            <td style="text-align:center;">${pc.duration} Minit</td>
-                        </tr>
-                    `;
-                }
+            usageHistory.forEach((item, index) => {
+                rowsHTML += `
+                    <tr>
+                        <td style="text-align:center;">${index + 1}</td>
+                        <td style="text-align:center;">${item.date}</td>
+                        <td style="text-align:center; font-weight:bold;">${item.pcNo}</td>
+                        <td style="text-transform:uppercase;">${item.studentName}</td>
+                        <td>${item.studentClass || '-'}</td>
+                        <td>${item.purpose || '-'}</td>
+                        <td style="text-align:center;">${item.duration} Minit</td>
+                    </tr>
+                `;
             });
 
-            if(logCount === 0) {
+            if(usageHistory.length === 0) {
                 rowsHTML = `<tr><td colspan="7" style="text-align:center; padding: 20px;">Tiada rekod penggunaan murid berdaftar buat masa ini.</td></tr>`;
             }
 
@@ -663,7 +678,7 @@
 
                     <div class="meta-info">
                         <div>Tarikh Cetakan: ${todayDate}</div>
-                        <div>Jumlah Rekod Sesi: ${logCount} Sesi</div>
+                        <div>Jumlah Rekod Sesi: ${usageHistory.length} Sesi</div>
                     </div>
 
                     <table>
@@ -784,6 +799,23 @@
                             pcSessions[item.id].purpose = item.purpose || '';
                             pcSessions[item.id].duration = item.duration || 30;
                             
+                            // MASUKKAN KE DALAM LOG SEJARAH JIKA ADA MURID WUDUD
+                            if(item.student_name && item.student_name !== '') {
+                                const todayDate = new Date().toLocaleDateString('ms-MY', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                                const isExist = usageHistory.some(h => h.pcNo === item.id && h.studentName === item.student_name && h.date === todayDate);
+                                if (!isExist) {
+                                    usageHistory.push({
+                                        date: todayDate,
+                                        pcNo: item.id,
+                                        studentName: item.student_name,
+                                        studentClass: item.student_class,
+                                        purpose: item.purpose,
+                                        duration: item.duration || 30
+                                    });
+                                    saveHistoryToStorage();
+                                }
+                            }
+
                             if(item.end_time && item.status === 'ACTIVE') {
                                 let now = new Date();
                                 let end = new Date(item.end_time);
@@ -821,6 +853,23 @@
                           pcSessions[item.id].studentClass = item.student_class || '';
                           pcSessions[item.id].purpose = item.purpose || '';
                           pcSessions[item.id].duration = item.duration || 30;
+
+                          // REALTIME LOG SYNC: APABILA SESEORANG MURID LOG MASUK DI MANA-MANA PC, ADMIN TERUS DAPAT LOG
+                          if(item.student_name && item.student_name !== '' && item.status === 'ACTIVE') {
+                              const todayDate = new Date().toLocaleDateString('ms-MY', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                              const isExist = usageHistory.some(h => h.pcNo === item.id && h.studentName === item.student_name && h.date === todayDate);
+                              if (!isExist) {
+                                  usageHistory.push({
+                                      date: todayDate,
+                                      pcNo: item.id,
+                                      studentName: item.student_name,
+                                      studentClass: item.student_class,
+                                      purpose: item.purpose,
+                                      duration: item.duration || 30
+                                  });
+                                  saveHistoryToStorage();
+                              }
+                          }
                           
                           if(item.end_time && item.status === 'ACTIVE') {
                               let now = new Date();
@@ -870,6 +919,8 @@
         }
 
         window.onload = async function() {
+            loadHistoryFromStorage();
+
             const savedView = localStorage.getItem('active_app_view');
             const urlParams = new URLSearchParams(window.location.search);
             const viewParam = urlParams.get('view');
