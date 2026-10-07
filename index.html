@@ -400,13 +400,21 @@
             }, 1000);
         }
 
+        function resetClientScreenLocally() {
+            window.onbeforeunload = null;
+            localStorage.removeItem('active_pc_session');
+            if(clientTimerInterval) clearInterval(clientTimerInterval);
+
+            document.getElementById('clientMiniBarTimer').classList.add('hidden');
+            document.getElementById('clientWorkspaceMessage').classList.add('hidden');
+            document.getElementById('mainHeader').classList.remove('hidden');
+            document.getElementById('clientFormCard').classList.remove('hidden');
+            const form = document.getElementById('studentLoginForm');
+            if(form) form.reset();
+        }
+
         async function handleEndClientSession() {
             if(confirm("Adakah anda pasti untuk menamatkan sesi penggunaan sekarang?")) {
-                window.onbeforeunload = null;
-                localStorage.removeItem('active_pc_session');
-
-                if(clientTimerInterval) clearInterval(clientTimerInterval);
-                
                 if(db) {
                     try {
                         await db.from('pc_sessions').update({ 
@@ -427,11 +435,7 @@
                     pcSessions[currentClientPc].remainingSeconds = 0;
                 }
 
-                document.getElementById('clientMiniBarTimer').classList.add('hidden');
-                document.getElementById('clientWorkspaceMessage').classList.add('hidden');
-                document.getElementById('mainHeader').classList.remove('hidden');
-                document.getElementById('clientFormCard').classList.remove('hidden');
-                document.getElementById('studentLoginForm').reset();
+                resetClientScreenLocally();
             }
         }
 
@@ -505,17 +509,20 @@
         async function stopAdminSession(pcNo) {
             if(db) {
                 try {
-                    await db.from('pc_sessions').update({ 
+                    await db.from('pc_sessions').upsert({ 
+                        id: pcNo, 
+                        pc_no: pcNo, 
                         status: 'AVAILABLE', 
                         student_name: '', 
                         student_class: '', 
                         purpose: '',
                         end_time: null 
-                    }).eq('id', pcNo);
+                    });
                 } catch(e){
                     console.error("Ralat Reset Supabase:", e);
                 }
             }
+
             if(pcSessions[pcNo]) {
                 pcSessions[pcNo].status = 'AVAILABLE';
                 pcSessions[pcNo].studentName = '';
@@ -524,13 +531,9 @@
                 pcSessions[pcNo].remainingSeconds = 0;
             }
 
-            // Padamkan simpanan tempatan jika PC yang di-reset adalah PC tempatan
-            const savedSession = localStorage.getItem('active_pc_session');
-            if (savedSession) {
-                const pcData = JSON.parse(savedSession);
-                if (pcData.pcNo === pcNo) {
-                    localStorage.removeItem('active_pc_session');
-                }
+            // Jika PC tempatan di-reset, terus reset skrinnya
+            if (currentClientPc === pcNo) {
+                resetClientScreenLocally();
             }
 
             renderAdminGrid();
@@ -559,7 +562,7 @@
                     pcSessions[id].purpose = '';
                     pcSessions[id].remainingSeconds = 0;
                 }
-                localStorage.removeItem('active_pc_session');
+                resetClientScreenLocally();
                 renderAdminGrid();
             }
         }
@@ -586,6 +589,9 @@
                             } else if (item.status === 'AVAILABLE') {
                                 pcSessions[item.id].remainingSeconds = 0;
                                 pcSessions[item.id].studentName = '';
+                                if (currentClientPc === item.id) {
+                                    resetClientScreenLocally();
+                                }
                             }
                         }
                     });
@@ -607,6 +613,7 @@
                           pcSessions[item.id].studentName = item.student_name || '';
                           pcSessions[item.id].studentClass = item.student_class || '';
                           pcSessions[item.id].purpose = item.purpose || '';
+                          
                           if(item.end_time && item.status === 'ACTIVE') {
                               let now = new Date();
                               let end = new Date(item.end_time);
@@ -614,6 +621,11 @@
                           } else if (item.status === 'AVAILABLE') {
                               pcSessions[item.id].remainingSeconds = 0;
                               pcSessions[item.id].studentName = '';
+                              
+                              // JIKA STATUS PC INI BERTUKAR KEPADA 'AVAILABLE' (DI-RESET OLEH GURU), TANGGALKAN MINI BAR DI SKRIN MURID
+                              if (currentClientPc === item.id) {
+                                  resetClientScreenLocally();
+                              }
                           }
                           renderAdminGrid();
                       }
