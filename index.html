@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>e-PusatAkses - Sistem Log Digital & Pemasa Penggunaan PC</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col antialiased">
+
+    <!-- MINI BAR PEMASA FLOATING -->
+    <div id="clientMiniBarTimer" class="hidden fixed top-0 left-0 w-full bg-slate-900/95 border-b-2 border-indigo-500 backdrop-blur-md z-50 px-4 sm:px-8 py-2.5 shadow-2xl transition-all duration-300">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="flex items-center gap-2 bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 font-extrabold text-xs px-3 py-1 rounded-lg">
+                    <i class="fa-solid fa-desktop"></i>
+                    <span id="miniActivePcNo">PC-05</span>
+                </div>
+                <div>
+                    <h4 id="miniActiveStudentName" class="text-xs font-extrabold text-white leading-tight">Nama Murid</h4>
+                    <p id="miniActiveStudentDetails" class="text-[10px] text-slate-400 font-medium">Kelas • Tujuan</p>
+                </div>
+            </div>
+
+            <div id="miniTimerBox" class="flex items-center gap-3 bg-slate-950 border border-slate-800 px-4 py-1.5 rounded-xl">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Baki Masa:
+                </span>
+                <span id="miniTimerText" class="text-xl font-black font-mono text-indigo-400 tracking-wider">00:00</span>
+            </div>
+
+            <div class="flex items-center space-x-2">
+                <button type="button" onclick="handleEndClientSession()" class="bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 border border-rose-500/30 text-xs font-bold py-1.5 px-3 rounded-lg transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-right-from-bracket text-[10px]"></i> Tamatkan Sesi
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- HEADER UTAMA -->
+    <header id="mainHeader" class="bg-slate-800/90 border-b border-slate-700 px-6 py-4 sticky top-0 z-30 backdrop-blur-md flex flex-wrap items-center justify-between gap-4 shadow-lg">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-indigo-500/30">
+                <i class="fa-solid fa-desktop"></i>
+            </div>
+            <div>
+                <h1 class="font-extrabold text-lg tracking-wide text-white leading-tight">e-PusatAkses Sekolah</h1>
+                <p class="text-[11px] text-indigo-400 font-medium flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Sistem Log Penggunaan & Pemasa Digital
+                </p>
+            </div>
+        </div>
+
+        <div class="flex items-center bg-slate-950 p-1.5 rounded-xl border border-slate-700">
+            <button type="button" onclick="switchView('client')" id="btnViewClient" class="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 bg-indigo-600 text-white shadow-md">
+                <i class="fa-solid fa-display"></i> Mod PC Client (Murid)
+            </button>
+            <button type="button" onclick="switchView('admin')" id="btnViewAdmin" class="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 text-slate-400 hover:text-white">
+                <i class="fa-solid fa-chart-pie"></i> Dashboard Admin (Live)
+            </button>
+        </div>
+    </header>
+
+    <!-- KANDUNGAN UTAMA -->
+    <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full flex flex-col justify-center">
+
+        <!-- VIEW 1: MOD PC CLIENT (BORANG LOG MASUK) -->
+        <section id="view-client" class="w-full max-w-xl mx-auto transition-all duration-300">
+            <div id="clientFormCard" class="bg-slate-800 border border-slate-700 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+                <div class="text-center mb-6">
+                    <span class="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider inline-block mb-2">
+                        Sesi Pembelajaran Digital
+                    </span>
+                    <h2 class="text-2xl font-black text-white tracking-tight">Daftar Penggunaan Komputer</h2>
+                    <p class="text-xs text-slate-400 mt-1">Isi maklumat anda sebelum memulakan sesi penggunaan PC Pusat Akses</p>
+                </div>
+
+                <form id="studentLoginForm" onsubmit="handleStartSession(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Nombor Komputer (PC)</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-laptop absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+                            <select id="clientPcNo" class="w-full bg-slate-900 border border-slate-700 text-slate-100 font-bold text-sm rounded-xl pl-10 pr-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition">
+                                <option value="PC-01">PC-01</option>
+                                <option value="PC-02">PC-02</option>
+                                <option value="PC-03">PC-03</option>
+                                <option value="PC-04">PC-04</option>
+                                <option value="PC-05">PC-05</option>
+                                <option value="PC-06">PC-06</option>
+                                <option value="PC-07">PC-07</option>
+                                <option value="PC-08">PC-08</option>
+                                <option value="PC-09">PC-09</option>
+                                <option value="PC-10">PC-10</option>
+                                <option value="PC-11">PC-11</option>
+                                <option value="PC-12">PC-12</option>
+                                <option value="PC-13">PC-13</option>
+                                <option value="PC-14">PC-14</option>
+                                <option value="PC-15">PC-15</option>
+                                <option value="PC-16">PC-16</option>
+                                <option value="PC-17">PC-17</option>
+                                <option value="PC-18">PC-18</option>
+                                <option value="PC-19">PC-19</option>
+                                <option value="PC-20">PC-20</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Nama Penuh Murid</label>
+                        <div class="relative">
+                            <i class="fa-regular fa-user absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+                            <input type="text" id="clientStudentName" required placeholder="Contoh: Muhammad Ali Bin Hassan" class="w-full bg-slate-900 border border-slate-700 text-slate-100 font-semibold text-sm rounded-xl pl-10 pr-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Kelas / Tahun</label>
+                            <select id="clientStudentClass" required class="w-full bg-slate-900 border border-slate-700 text-slate-100 font-semibold text-sm rounded-xl p-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition">
+                                <option value="">-- Pilih Kelas --</option>
+                                <option value="Tahun 1">Tahun 1</option>
+                                <option value="Tahun 2">Tahun 2</option>
+                                <option value="Tahun 3">Tahun 3</option>
+                                <option value="Tahun 4">Tahun 4</option>
+                                <option value="Tahun 5">Tahun 5</option>
+                                <option value="Tahun 6">Tahun 6</option>
+                                <option value="Tingkatan 1">Tingkatan 1</option>
+                                <option value="Tingkatan 2">Tingkatan 2</option>
+                                <option value="Tingkatan 3">Tingkatan 3</option>
+                                <option value="Tingkatan 4">Tingkatan 4</option>
+                                <option value="Tingkatan 5">Tingkatan 5</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Tempoh Masa Sesi</label>
+                            <select id="clientDuration" class="w-full bg-slate-900 border border-slate-700 text-indigo-400 font-extrabold text-sm rounded-xl p-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition">
+                                <option value="30">30 Minit</option>
+                                <option value="45">45 Minit</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Tujuan Penggunaan</label>
+                        <select id="clientPurpose" class="w-full bg-slate-900 border border-slate-700 text-slate-100 font-semibold text-sm rounded-xl p-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition">
+                            <option value="Carian Maklumat">Carian Maklumat / Internet</option>
+                            <option value="Portal DELIMa">Portal DELIMa</option>
+                            <option value="Kerja Sekolah / Tugasan">Kerja Sekolah / Tugasan</option>
+                            <option value="Lain-lain">Lain-lain</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" id="btnSubmitForm" class="w-full mt-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-extrabold text-sm py-4 px-6 rounded-xl shadow-lg shadow-indigo-600/30 transition transform active:scale-95 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-play"></i> Hantar & Mula Sesi
+                    </button>
+                </form>
+            </div>
+
+            <div id="clientWorkspaceMessage" class="hidden text-center py-12 px-6 bg-slate-800/50 border border-slate-700/50 rounded-3xl mt-12">
+                <div class="w-16 h-16 bg-indigo-600/20 text-indigo-400 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">
+                    <i class="fa-solid fa-window-maximize"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">Sesi Penggunaan Sedang Aktif</h3>
+                <p class="text-xs text-slate-400 max-w-md mx-auto">
+                    Baki masa penggunaan anda sentiasa dipaparkan pada **Mini Bar di bahagian atas skrin**. Anda boleh membuka tab baharu pelayar untuk melayari Portal DELIMa atau membuat kerja sekolah.
+                </p>
+            </div>
+        </section>
+
+        <!-- VIEW 2: DASHBOARD ADMIN -->
+        <section id="view-admin" class="hidden w-full space-y-6">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-lg font-bold">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">Kosong</p>
+                        <h4 id="statAvailable" class="text-xl font-black text-white">20</h4>
+                    </div>
+                </div>
+                <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-lg font-bold">
+                        <i class="fa-solid fa-desktop"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">Aktif</p>
+                        <h4 id="statActive" class="text-xl font-black text-white">0</h4>
+                    </div>
+                </div>
+                <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center text-lg font-bold">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">Masa Tamat</p>
+                        <h4 id="statExpired" class="text-xl font-black text-white">0</h4>
+                    </div>
+                </div>
+                <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-lg font-bold">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">Jumlah Hari Ini</p>
+                        <h4 id="statTotalToday" class="text-xl font-black text-white">0</h4>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-4 bg-slate-800 border border-slate-700 p-4 rounded-2xl">
+                <div>
+                    <h2 class="text-lg font-black text-white">Status Live 20 PC Pusat Akses</h2>
+                    <p class="text-xs text-slate-400">Paparan pemantauan real-time status penggunaan komputer murid</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="resetAllSessions()" class="bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/30 font-bold text-xs py-2 px-3 rounded-lg transition flex items-center gap-2">
+                        <i class="fa-solid fa-power-off"></i> Reset Semua PC
+                    </button>
+                </div>
+            </div>
+
+            <div id="adminGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                <!-- GRID CARDS -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- SCRIPT UTAMA LOGIK APLIKASI -->
+    <script>
+        const SUPABASE_URL = "https://qjyejpbykhgifzmhwpbb.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqeWVqcGJ5a2hnaWZ6bWh3cGJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyOTA0MzMsImV4cCI6MjEwNjg2NjQzM30.Z4qGEJClY7oG7eLtNE08wJLhxSyHdUDOZXEEvBLFwuw";
+        
+        let db = null;
+        if (window.supabase) {
+            db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+
+        let pcSessions = {};
+        for(let i=1; i<=20; i++) {
+            let id = "PC-" + (i < 10 ? '0' + i : i);
+            pcSessions[id] = {
+                pcNo: id,
+                status: 'AVAILABLE',
+                studentName: '',
+                studentClass: '',
+                purpose: '',
+                duration: 30,
+                endTime: null,
+                remainingSeconds: 0
+            };
+        }
+
+        let currentClientPc = "PC-05";
+        let clientTimerInterval = null;
+
+        function switchView(mode) {
+            const clientSec = document.getElementById('view-client');
+            const adminSec = document.getElementById('view-admin');
+            const btnClient = document.getElementById('btnViewClient');
+            const btnAdmin = document.getElementById('btnViewAdmin');
+
+            if(mode === 'client') {
+                clientSec.classList.remove('hidden');
+                adminSec.classList.add('hidden');
+                btnClient.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 bg-indigo-600 text-white shadow-md";
+                btnAdmin.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 text-slate-400 hover:text-white";
+            } else {
+                clientSec.classList.add('hidden');
+                adminSec.classList.remove('hidden');
+                btnClient.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 text-slate-400 hover:text-white";
+                btnAdmin.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 bg-indigo-600 text-white shadow-md";
+                renderAdminGrid();
+            }
+        }
+
+        async function handleStartSession(event) {
+            if (event) event.preventDefault();
+
+            const pcNo = document.getElementById('clientPcNo')?.value.trim() || "PC-05";
+            const name = document.getElementById('clientStudentName')?.value.trim() || "Murid";
+            const studentClass = document.getElementById('clientStudentClass')?.value.trim();
+            const durationInput = document.getElementById('clientDuration')?.value;
+            const duration = parseInt(durationInput, 10) || 30;
+            const purpose = document.getElementById('clientPurpose')?.value.trim() || "Carian";
+
+            if (!studentClass) {
+                alert("Sila pilih Kelas / Tahun terlebih dahulu!");
+                return false;
+            }
+
+            window.onbeforeunload = function(e) {
+                const message = "Adakah anda pasti untuk meninggalkan halaman ini?";
+                e = e || window.event;
+                if (e) e.returnValue = message;
+                return message;
+            };
+
+            currentClientPc = pcNo;
+            const now = new Date();
+            const endTime = new Date(now.getTime() + duration * 60000);
+
+            pcSessions[pcNo] = {
+                pcNo: pcNo,
+                status: 'ACTIVE',
+                studentName: name,
+                studentClass: studentClass,
+                purpose: purpose,
+                duration: duration,
+                endTime: endTime,
+                remainingSeconds: duration * 60
+            };
+
+            localStorage.setItem('active_pc_session', JSON.stringify({
+                pcNo, studentName: name, studentClass, purpose, duration, endTime
+            }));
+
+            if (db) {
+                try {
+                    await db.from('pc_sessions').upsert({
+                        id: pcNo,
+                        pc_no: pcNo,
+                        status: 'ACTIVE',
+                        student_name: name,
+                        student_class: studentClass,
+                        purpose: purpose,
+                        duration: duration,
+                        end_time: endTime.toISOString(),
+                        updated_at: new Date().toISOString()
+                    });
+                } catch(e) {
+                    console.error("Gagal simpan Supabase:", e);
+                }
+            }
+
+            document.getElementById('clientFormCard').classList.add('hidden');
+            document.getElementById('mainHeader').classList.add('hidden');
+            document.getElementById('clientMiniBarTimer').classList.remove('hidden');
+            document.getElementById('clientWorkspaceMessage').classList.remove('hidden');
+
+            document.getElementById('miniActivePcNo').innerText = pcNo;
+            document.getElementById('miniActiveStudentName').innerText = name;
+            document.getElementById('miniActiveStudentDetails').innerText = studentClass + ' • ' + purpose;
+
+            startClientTimer(pcNo, endTime);
+            return false;
+        }
+
+        function startClientTimer(pcNo, endTimeObj) {
+            if(clientTimerInterval) clearInterval(clientTimerInterval);
+
+            clientTimerInterval = setInterval(async () => {
+                let now = new Date();
+                let diffSeconds = Math.max(0, Math.floor((new Date(endTimeObj) - now) / 1000));
+                
+                if(pcSessions[pcNo]) {
+                    pcSessions[pcNo].remainingSeconds = diffSeconds;
+                }
+
+                let mins = Math.floor(diffSeconds / 60);
+                let secs = diffSeconds % 60;
+                let timeStr = (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
+
+                document.getElementById('miniTimerText').innerText = timeStr;
+
+                if(diffSeconds === 0) {
+                    if(pcSessions[pcNo]) pcSessions[pcNo].status = 'EXPIRED';
+                    clearInterval(clientTimerInterval);
+                    window.onbeforeunload = null;
+                    localStorage.removeItem('active_pc_session');
+
+                    if(db) {
+                        try {
+                            await db.from('pc_sessions').update({ status: 'EXPIRED' }).eq('id', pcNo);
+                        } catch(e){}
+                    }
+
+                    document.getElementById('miniTimerText').innerText = "00:00 (TAMAT)";
+                    alert("⚠️ MASA PENGGUNAAN TAMAT!\nSila kemaskan barang dan kosongkan PC untuk pengguna seterusnya.");
+                }
+
+                renderAdminGrid();
+            }, 1000);
+        }
+
+        async function handleEndClientSession() {
+            if(confirm("Adakah anda pasti untuk menamatkan sesi penggunaan sekarang?")) {
+                window.onbeforeunload = null;
+                localStorage.removeItem('active_pc_session');
+
+                if(clientTimerInterval) clearInterval(clientTimerInterval);
+                
+                if(db) {
+                    try {
+                        await db.from('pc_sessions').update({ status: 'AVAILABLE', student_name: '' }).eq('id', currentClientPc);
+                    } catch(e){}
+                }
+
+                if(pcSessions[currentClientPc]) {
+                    pcSessions[currentClientPc].status = 'AVAILABLE';
+                    pcSessions[currentClientPc].studentName = '';
+                }
+
+                document.getElementById('clientMiniBarTimer').classList.add('hidden');
+                document.getElementById('clientWorkspaceMessage').classList.add('hidden');
+                document.getElementById('mainHeader').classList.remove('hidden');
+                document.getElementById('clientFormCard').classList.remove('hidden');
+                document.getElementById('studentLoginForm').reset();
+            }
+        }
+
+        function renderAdminGrid() {
+            const grid = document.getElementById('adminGrid');
+            if(!grid) return;
+
+            grid.innerHTML = '';
+
+            let availCount = 0;
+            let activeCount = 0;
+            let expiredCount = 0;
+
+            Object.keys(pcSessions).forEach(pcNo => {
+                let pc = pcSessions[pcNo];
+                
+                let cardColor = "border-slate-700 bg-slate-800";
+                let badge = '<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">KOSONG</span>';
+                
+                if(pc.status === 'AVAILABLE') availCount++;
+                if(pc.status === 'ACTIVE') {
+                    activeCount++;
+                    cardColor = "border-indigo-500/50 bg-slate-800/90 ring-1 ring-indigo-500/30";
+                    badge = '<span class="bg-blue-500/20 text-blue-300 border border-blue-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">AKTIF</span>';
+                }
+                if(pc.status === 'EXPIRED') {
+                    expiredCount++;
+                    cardColor = "border-rose-500 bg-rose-950/30 ring-2 ring-rose-500 animate-pulse";
+                    badge = '<span class="bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full">MASA TAMAT</span>';
+                }
+
+                let mins = Math.floor((pc.remainingSeconds || 0) / 60);
+                let secs = (pc.remainingSeconds || 0) % 60;
+                let timerText = (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
+
+                let infoHTML = '';
+                if(pc.status !== 'AVAILABLE') {
+                    infoHTML = '<div class="space-y-1 mb-3">' +
+                                '<h5 class="text-xs font-bold text-white truncate">' + (pc.studentName || 'Murid') + '</h5>' +
+                                '<p class="text-[11px] text-slate-400 font-medium">' + (pc.studentClass || '-') + ' • ' + (pc.purpose || '-') + '</p>' +
+                                '<div class="text-lg font-black font-mono text-indigo-400 mt-2">' + timerText + '</div>' +
+                               '</div>';
+                } else {
+                    infoHTML = '<div class="py-4 text-center text-xs text-slate-500 font-medium">Sedia Digunakan</div>';
+                }
+
+                let cardHTML = '<div class="border rounded-2xl p-4 flex flex-col justify-between transition-all ' + cardColor + '">' +
+                                '<div>' +
+                                    '<div class="flex items-center justify-between mb-3">' +
+                                        '<span class="font-extrabold text-sm text-white flex items-center gap-2">' +
+                                            '<i class="fa-solid fa-desktop text-slate-400"></i> ' + pc.pcNo +
+                                        '</span>' +
+                                        badge +
+                                    '</div>' +
+                                    infoHTML +
+                                '</div>' +
+                                '<div class="pt-2 border-t border-slate-700/50 flex items-center gap-1.5 mt-2">' +
+                                    '<button type="button" onclick="stopAdminSession(\'' + pc.pcNo + '\')" class="w-full bg-slate-700/50 hover:bg-slate-700 text-slate-300 text-[10px] font-bold py-1.5 rounded-lg transition">Reset PC</button>' +
+                                '</div>' +
+                               '</div>';
+
+                grid.innerHTML += cardHTML;
+            });
+
+            document.getElementById('statAvailable').innerText = availCount;
+            document.getElementById('statActive').innerText = activeCount;
+            document.getElementById('statExpired').innerText = expiredCount;
+            document.getElementById('statTotalToday').innerText = activeCount + expiredCount;
+        }
+
+        async function stopAdminSession(pcNo) {
+            if(db) {
+                try {
+                    await db.from('pc_sessions').update({ status: 'AVAILABLE', student_name: '' }).eq('id', pcNo);
+                } catch(e){}
+            }
+            if(pcSessions[pcNo]) {
+                pcSessions[pcNo].status = 'AVAILABLE';
+                pcSessions[pcNo].studentName = '';
+                pcSessions[pcNo].remainingSeconds = 0;
+            }
+            renderAdminGrid();
+        }
+
+        async function resetAllSessions() {
+            if(confirm("Adakah anda pasti untuk reset status SEMUA 20 Komputer?")) {
+                for(let i=1; i<=20; i++) {
+                    let id = "PC-" + (i < 10 ? '0' + i : i);
+                    if(db) {
+                        try {
+                            await db.from('pc_sessions').upsert({ id, pc_no: id, status: 'AVAILABLE', student_name: '' });
+                        } catch(e){}
+                    }
+                    pcSessions[id].status = 'AVAILABLE';
+                    pcSessions[id].studentName = '';
+                    pcSessions[id].remainingSeconds = 0;
+                }
+                localStorage.removeItem('active_pc_session');
+                renderAdminGrid();
+            }
+        }
+
+        // FUNGSI MEMBACA DATA AWAL SUPABASE
+        async function fetchInitialSupabaseData() {
+            if(!db) return;
+            try {
+                const { data, error } = await db.from('pc_sessions').select('*');
+                if(data) {
+                    data.forEach(item => {
+                        if(pcSessions[item.id]) {
+                            pcSessions[item.id].status = item.status || 'AVAILABLE';
+                            pcSessions[item.id].studentName = item.student_name || '';
+                            pcSessions[item.id].studentClass = item.student_class || '';
+                            pcSessions[item.id].purpose = item.purpose || '';
+                            if(item.end_time) {
+                                let now = new Date();
+                                let end = new Date(item.end_time);
+                                let remaining = Math.max(0, Math.floor((end - now) / 1000));
+                                pcSessions[item.id].remainingSeconds = remaining;
+                                if(remaining === 0 && item.status === 'ACTIVE') {
+                                    pcSessions[item.id].status = 'EXPIRED';
+                                }
+                            }
+                        }
+                    });
+                    renderAdminGrid();
+                }
+            } catch(err) {
+                console.error("Ralat Fetch Data:", err);
+            }
+        }
+
+        // LISTEN REALTIME CHANGES
+        function setupRealtimeListener() {
+            if(!db) return;
+            try {
+                db.channel('public:pc_sessions')
+                  .on('postgres_changes', { event: '*', schema: 'public', table: 'pc_sessions' }, payload => {
+                      const item = payload.new;
+                      if(item && pcSessions[item.id]) {
+                          pcSessions[item.id].status = item.status;
+                          pcSessions[item.id].studentName = item.student_name;
+                          pcSessions[item.id].studentClass = item.student_class;
+                          pcSessions[item.id].purpose = item.purpose;
+                          if(item.end_time) {
+                              let now = new Date();
+                              let end = new Date(item.end_time);
+                              pcSessions[item.id].remainingSeconds = Math.max(0, Math.floor((end - now) / 1000));
+                          }
+                          renderAdminGrid();
+                      }
+                  }).subscribe();
+            } catch(err) {
+                console.error("Ralat Realtime Listener:", err);
+            }
+        }
+
+        function checkActiveSessionOnLoad() {
+            const savedSession = localStorage.getItem('active_pc_session');
+            if (savedSession) {
+                const pcData = JSON.parse(savedSession);
+                const now = new Date().getTime();
+                const endTime = new Date(pcData.endTime).getTime();
+
+                if (endTime > now) {
+                    currentClientPc = pcData.pcNo;
+                    
+                    document.getElementById('clientFormCard').classList.add('hidden');
+                    document.getElementById('mainHeader').classList.add('hidden');
+                    document.getElementById('clientMiniBarTimer').classList.remove('hidden');
+                    document.getElementById('clientWorkspaceMessage').classList.remove('hidden');
+
+                    document.getElementById('miniActivePcNo').innerText = pcData.pcNo;
+                    document.getElementById('miniActiveStudentName').innerText = pcData.studentName;
+                    document.getElementById('miniActiveStudentDetails').innerText = pcData.studentClass + ' • ' + pcData.purpose;
+
+                    startClientTimer(pcData.pcNo, pcData.endTime);
+                } else {
+                    localStorage.removeItem('active_pc_session');
+                }
+            }
+        }
+
+        window.onload = async function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const autoPc = urlParams.get('pc');
+            
+            if (autoPc) {
+                const pcSelect = document.getElementById('clientPcNo');
+                if (pcSelect) {
+                    pcSelect.value = autoPc.toUpperCase();
+                }
+            }
+
+            checkActiveSessionOnLoad();
+            await fetchInitialSupabaseData();
+            setupRealtimeListener();
+        };
+
+        setInterval(() => {
+            Object.keys(pcSessions).forEach(id => {
+                if(pcSessions[id].status === 'ACTIVE' && pcSessions[id].remainingSeconds > 0) {
+                    pcSessions[id].remainingSeconds--;
+                }
+            });
+            renderAdminGrid();
+        }, 1000);
+    </script>
+</body>
+</html>
