@@ -471,6 +471,22 @@
             });
         }
 
+        // FUNGSI MENGEMASKINI MASA TAMAT SEBENAR PADA LOG (PEMBAIKAN MUKTAMAD)
+        function recordActualEndTime(pcNo) {
+            const actualEndTimeStr = new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
+            
+            for (let i = usageHistory.length - 1; i >= 0; i--) {
+                if (usageHistory[i].pcNo === pcNo) {
+                    if (!usageHistory[i].endTime || usageHistory[i].endTime.includes('Aktif') || usageHistory[i].endTime === '-') {
+                        usageHistory[i].endTime = actualEndTimeStr;
+                        saveHistoryToStorage();
+                        break;
+                    }
+                }
+            }
+            renderLogTable();
+        }
+
         function switchView(mode) {
             const clientSec = document.getElementById('view-client');
             const adminSec = document.getElementById('view-admin');
@@ -728,6 +744,8 @@
             if (event) event.preventDefault();
 
             const pcNo = document.getElementById('clientPcNo')?.value.trim() || "PC-05";
+            currentClientPc = pcNo;
+
             const name = document.getElementById('clientStudentName')?.value.trim() || "Murid";
             const studentYear = document.getElementById('clientStudentYear')?.value.trim();
             const classNameInput = document.getElementById('clientClassName')?.value.trim();
@@ -746,7 +764,6 @@
 
             const todayDate = now.toLocaleDateString('ms-MY', { day: '2-digit', month: '2-digit', year: 'numeric' });
             const startTimeStr = now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
-            const endTimeStr = endTime.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
 
             window.onbeforeunload = function(e) {
                 const message = "Adakah anda pasti untuk meninggalkan halaman ini?";
@@ -754,8 +771,6 @@
                 if (e) e.returnValue = message;
                 return message;
             };
-
-            currentClientPc = pcNo;
 
             pcSessions[pcNo] = {
                 pcNo: pcNo,
@@ -775,7 +790,7 @@
                 studentClass: fullClassDetails,
                 purpose: purpose,
                 startTime: startTimeStr,
-                endTime: endTimeStr
+                endTime: 'Sedang Aktif...'
             };
             
             const isDuplicate = usageHistory.some(h => h.pcNo === pcNo && h.studentName === name && h.date === todayDate && h.startTime === startTimeStr);
@@ -785,7 +800,7 @@
             }
 
             localStorage.setItem('active_pc_session', JSON.stringify({
-                pcNo, studentName: name, studentClass: fullClassDetails, purpose, duration, endTime, startTimeStr, endTimeStr
+                pcNo, studentName: name, studentClass: fullClassDetails, purpose, duration, endTime, startTimeStr
             }));
 
             if (db) {
@@ -842,6 +857,9 @@
                     window.onbeforeunload = null;
                     localStorage.removeItem('active_pc_session');
 
+                    // CATAT MASA TAMAT SEBENAR BILA PEMASA CUKUP 00:00
+                    recordActualEndTime(pcNo);
+
                     if(db) {
                         try {
                             await db.from('pc_sessions').update({ status: 'EXPIRED' }).eq('id', pcNo);
@@ -872,6 +890,18 @@
 
         async function handleEndClientSession() {
             if(confirm("Adakah anda pasti untuk menamatkan sesi penggunaan sekarang?")) {
+                const savedSession = localStorage.getItem('active_pc_session');
+                let activePc = currentClientPc;
+                if (savedSession) {
+                    try {
+                        const parsed = JSON.parse(savedSession);
+                        if (parsed.pcNo) activePc = parsed.pcNo;
+                    } catch(e){}
+                }
+
+                // 1. RAKAM MASA TAMAT SEBENAR SEBELUM DATA LOKAL DIBERSIHKAN
+                recordActualEndTime(activePc);
+
                 if(db) {
                     try {
                         await db.from('pc_sessions').update({ 
@@ -880,16 +910,16 @@
                             student_class: '',
                             purpose: '',
                             end_time: null
-                        }).eq('id', currentClientPc);
+                        }).eq('id', activePc);
                     } catch(e){}
                 }
 
-                if(pcSessions[currentClientPc]) {
-                    pcSessions[currentClientPc].status = 'AVAILABLE';
-                    pcSessions[currentClientPc].studentName = '';
-                    pcSessions[currentClientPc].studentClass = '';
-                    pcSessions[currentClientPc].purpose = '';
-                    pcSessions[currentClientPc].remainingSeconds = 0;
+                if(pcSessions[activePc]) {
+                    pcSessions[activePc].status = 'AVAILABLE';
+                    pcSessions[activePc].studentName = '';
+                    pcSessions[activePc].studentClass = '';
+                    pcSessions[activePc].purpose = '';
+                    pcSessions[activePc].remainingSeconds = 0;
                 }
 
                 resetClientScreenLocally();
@@ -963,7 +993,6 @@
             document.getElementById('statTotalToday').innerText = usageHistory.length;
         }
 
-        // MEMAPARKAN JADUAL LOG YANG TELAH DISUSUN UNTUK ADMIN
         function renderLogTable() {
             const tableBody = document.getElementById('logTableBody');
             if(!tableBody) return;
@@ -972,6 +1001,11 @@
             const sortedHistory = getSortedUsageHistory();
 
             sortedHistory.forEach((item, index) => {
+                let endTimeBadge = item.endTime;
+                if (!item.endTime || item.endTime.includes('Aktif')) {
+                    endTimeBadge = `<span class="bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded-full font-bold animate-pulse">Sedang Aktif...</span>`;
+                }
+
                 rowsHTML += `<tr class="hover:bg-slate-700/30">
                     <td class="p-3 font-semibold">${index + 1}</td>
                     <td class="p-3">${item.date}</td>
@@ -980,7 +1014,7 @@
                     <td class="p-3">${item.studentClass || '-'}</td>
                     <td class="p-3">${item.purpose || '-'}</td>
                     <td class="p-3 text-emerald-400 font-semibold">${item.startTime || '-'}</td>
-                    <td class="p-3 text-rose-400 font-semibold">${item.endTime || '-'}</td>
+                    <td class="p-3 text-rose-400 font-semibold">${endTimeBadge}</td>
                 </tr>`;
             });
 
@@ -991,7 +1025,6 @@
             }
         }
 
-        // MEMBUKA TAB BAHARU A4 LANDSCAPE (TERDISUSUN MENGIKUT NO PC)
         function openPrintTab() {
             let printWindow = window.open('', '_blank');
             let todayDate = new Date().toLocaleDateString('ms-MY', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -1095,6 +1128,8 @@
         }
 
         async function stopAdminSession(pcNo) {
+            recordActualEndTime(pcNo);
+
             if(db) {
                 try {
                     await db.from('pc_sessions').upsert({ 
@@ -1131,6 +1166,8 @@
             if(confirm("Adakah anda pasti untuk reset status SEMUA 20 Komputer?")) {
                 for(let i=1; i<=20; i++) {
                     let id = "PC-" + (i < 10 ? '0' + i : i);
+                    recordActualEndTime(id);
+
                     if(db) {
                         try {
                             await db.from('pc_sessions').upsert({ 
@@ -1179,14 +1216,12 @@
                             pcSessions[item.id].purpose = item.purpose || '';
                             pcSessions[item.id].duration = item.duration || 30;
                             
-                            if(item.student_name && item.student_name !== '') {
+                            if(item.student_name && item.student_name !== '' && item.status === 'ACTIVE') {
                                 const now = new Date();
                                 const todayDate = now.toLocaleDateString('ms-MY', { day: '2-digit', month: '2-digit', year: 'numeric' });
                                 const startTimeStr = now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
-                                const endObj = item.end_time ? new Date(item.end_time) : new Date(now.getTime() + (item.duration || 30) * 60000);
-                                const endTimeStr = endObj.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
 
-                                const isExist = usageHistory.some(h => h.pcNo === item.id && h.studentName === item.student_name && h.date === todayDate);
+                                const isExist = usageHistory.some(h => h.pcNo === item.id && h.studentName === item.student_name && h.date === todayDate && (h.endTime === 'Sedang Aktif...' || !h.endTime));
                                 if (!isExist) {
                                     usageHistory.push({
                                         date: todayDate,
@@ -1195,7 +1230,7 @@
                                         studentClass: item.student_class,
                                         purpose: item.purpose,
                                         startTime: startTimeStr,
-                                        endTime: endTimeStr
+                                        endTime: 'Sedang Aktif...'
                                     });
                                     saveHistoryToStorage();
                                 }
@@ -1255,10 +1290,8 @@
                               const now = new Date();
                               const todayDate = now.toLocaleDateString('ms-MY', { day: '2-digit', month: '2-digit', year: 'numeric' });
                               const startTimeStr = now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
-                              const endObj = item.end_time ? new Date(item.end_time) : new Date(now.getTime() + (item.duration || 30) * 60000);
-                              const endTimeStr = endObj.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
 
-                              const isExist = usageHistory.some(h => h.pcNo === item.id && h.studentName === item.student_name && h.date === todayDate);
+                              const isExist = usageHistory.some(h => h.pcNo === item.id && h.studentName === item.student_name && h.date === todayDate && (h.endTime === 'Sedang Aktif...' || !h.endTime));
                               if (!isExist) {
                                   usageHistory.push({
                                       date: todayDate,
@@ -1267,9 +1300,18 @@
                                       studentClass: item.student_class,
                                       purpose: item.purpose,
                                       startTime: startTimeStr,
-                                      endTime: endTimeStr
+                                      endTime: 'Sedang Aktif...'
                                   });
                                   saveHistoryToStorage();
+                              }
+                          } else if (item.status === 'AVAILABLE') {
+                              pcSessions[item.id].remainingSeconds = 0;
+                              pcSessions[item.id].studentName = '';
+                              
+                              recordActualEndTime(item.id);
+
+                              if (currentClientPc === item.id) {
+                                  resetClientScreenLocally();
                               }
                           }
                           
@@ -1277,13 +1319,6 @@
                               let now = new Date();
                               let end = new Date(item.end_time);
                               pcSessions[item.id].remainingSeconds = Math.max(0, Math.floor((end - now) / 1000));
-                          } else if (item.status === 'AVAILABLE') {
-                              pcSessions[item.id].remainingSeconds = 0;
-                              pcSessions[item.id].studentName = '';
-                              
-                              if (currentClientPc === item.id) {
-                                  resetClientScreenLocally();
-                              }
                           }
                           renderAdminGrid();
                           renderLogTable();
