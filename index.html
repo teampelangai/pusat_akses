@@ -29,7 +29,7 @@
                 </div>
                 <div>
                     <h4 id="miniActiveStudentName" class="text-xs font-extrabold text-white leading-tight">Nama Murid</h4>
-                    <p id="miniActiveStudentDetails" class="text-[10px] text-slate-400 font-medium">Kelas • Tujuan</p>
+                    <p id="miniActiveStudentDetails" class="text-[10px] text-slate-400 font-medium">Tahun/Kelas • Tujuan</p>
                 </div>
             </div>
 
@@ -126,11 +126,12 @@
                         </div>
                     </div>
 
+                    <!-- PENGASINGAN TAHUN/TINGKATAN DAN NAMA KELAS -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Kelas / Tahun</label>
-                            <select id="clientStudentClass" required class="w-full bg-slate-900 border border-slate-700 text-slate-100 font-semibold text-sm rounded-xl p-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition">
-                                <option value="">-- Pilih Kelas --</option>
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Tahun / Tingkatan</label>
+                            <select id="clientStudentYear" required class="w-full bg-slate-900 border border-slate-700 text-slate-100 font-semibold text-sm rounded-xl p-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition">
+                                <option value="">-- Pilih Tahun --</option>
                                 <option value="Tahun 1">Tahun 1</option>
                                 <option value="Tahun 2">Tahun 2</option>
                                 <option value="Tahun 3">Tahun 3</option>
@@ -146,22 +147,34 @@
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Tempoh Masa Sesi</label>
-                            <select id="clientDuration" class="w-full bg-slate-900 border border-slate-700 text-indigo-400 font-extrabold text-sm rounded-xl p-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition">
-                                <option value="30">30 Minit</option>
-                                <option value="45">45 Minit</option>
-                            </select>
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Nama Kelas</label>
+                            <div class="relative">
+                                <input type="text" id="clientClassName" required placeholder="Contoh: Cemerlang / Ibnu Sina" class="w-full bg-slate-900 border border-slate-700 text-slate-100 font-semibold text-sm rounded-xl p-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition">
+                            </div>
                         </div>
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Tujuan Penggunaan</label>
-                        <select id="clientPurpose" class="w-full bg-slate-900 border border-slate-700 text-slate-100 font-semibold text-sm rounded-xl p-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition">
-                            <option value="Carian Maklumat">Carian Maklumat / Internet</option>
-                            <option value="Portal DELIMa">Portal DELIMa</option>
-                            <option value="Kerja Sekolah / Tugasan">Kerja Sekolah / Tugasan</option>
-                            <option value="Lain-lain">Lain-lain</option>
-                        </select>
+                    <!-- PILIHAN TEMPOH MASA BAHARU -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Tempoh Masa Sesi</label>
+                            <select id="clientDuration" class="w-full bg-slate-900 border border-slate-700 text-indigo-400 font-extrabold text-sm rounded-xl p-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition">
+                                <option value="15">15 Minit</option>
+                                <option value="30" selected>30 Minit</option>
+                                <option value="45">45 Minit</option>
+                                <option value="60">60 Minit (1 Jam)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Tujuan Penggunaan</label>
+                            <select id="clientPurpose" class="w-full bg-slate-900 border border-slate-700 text-slate-100 font-semibold text-sm rounded-xl p-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition">
+                                <option value="Carian Maklumat">Carian Maklumat / Internet</option>
+                                <option value="Portal DELIMa">Portal DELIMa</option>
+                                <option value="Kerja Sekolah / Tugasan">Kerja Sekolah / Tugasan</option>
+                                <option value="Lain-lain">Lain-lain</option>
+                            </select>
+                        </div>
                     </div>
 
                     <button type="submit" id="btnSubmitForm" class="w-full mt-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-extrabold text-sm py-4 px-6 rounded-xl shadow-lg shadow-indigo-600/30 transition transform active:scale-95 flex items-center justify-center gap-2">
@@ -296,15 +309,19 @@
 
             const pcNo = document.getElementById('clientPcNo')?.value.trim() || "PC-05";
             const name = document.getElementById('clientStudentName')?.value.trim() || "Murid";
-            const studentClass = document.getElementById('clientStudentClass')?.value.trim();
+            const studentYear = document.getElementById('clientStudentYear')?.value.trim();
+            const classNameInput = document.getElementById('clientClassName')?.value.trim();
             const durationInput = document.getElementById('clientDuration')?.value;
             const duration = parseInt(durationInput, 10) || 30;
             const purpose = document.getElementById('clientPurpose')?.value.trim() || "Carian";
 
-            if (!studentClass) {
-                alert("Sila pilih Kelas / Tahun terlebih dahulu!");
+            if (!studentYear || !classNameInput) {
+                alert("Sila lengkapkan pilihan Tahun/Tingkatan dan Nama Kelas!");
                 return false;
             }
+
+            // Gabungkan Tahun dan Nama Kelas untuk disimpan dalam medan student_class (contoh: "Tahun 3 Cemerlang")
+            const fullClassDetails = studentYear + " " + classNameInput;
 
             window.onbeforeunload = function(e) {
                 const message = "Adakah anda pasti untuk meninggalkan halaman ini?";
@@ -321,7 +338,7 @@
                 pcNo: pcNo,
                 status: 'ACTIVE',
                 studentName: name,
-                studentClass: studentClass,
+                studentClass: fullClassDetails,
                 purpose: purpose,
                 duration: duration,
                 endTime: endTime,
@@ -329,7 +346,7 @@
             };
 
             localStorage.setItem('active_pc_session', JSON.stringify({
-                pcNo, studentName: name, studentClass, purpose, duration, endTime
+                pcNo, studentName: name, studentClass: fullClassDetails, purpose, duration, endTime
             }));
 
             if (db) {
@@ -339,7 +356,7 @@
                         pc_no: pcNo,
                         status: 'ACTIVE',
                         student_name: name,
-                        student_class: studentClass,
+                        student_class: fullClassDetails,
                         purpose: purpose,
                         duration: duration,
                         end_time: endTime.toISOString(),
@@ -357,7 +374,7 @@
 
             document.getElementById('miniActivePcNo').innerText = pcNo;
             document.getElementById('miniActiveStudentName').innerText = name;
-            document.getElementById('miniActiveStudentDetails').innerText = studentClass + ' • ' + purpose;
+            document.getElementById('miniActiveStudentDetails').innerText = fullClassDetails + ' • ' + purpose;
 
             startClientTimer(pcNo, endTime);
             return false;
@@ -531,7 +548,6 @@
                 pcSessions[pcNo].remainingSeconds = 0;
             }
 
-            // Jika PC tempatan di-reset, terus reset skrinnya
             if (currentClientPc === pcNo) {
                 resetClientScreenLocally();
             }
@@ -622,7 +638,6 @@
                               pcSessions[item.id].remainingSeconds = 0;
                               pcSessions[item.id].studentName = '';
                               
-                              // JIKA STATUS PC INI BERTUKAR KEPADA 'AVAILABLE' (DI-RESET OLEH GURU), TANGGALKAN MINI BAR DI SKRIN MURID
                               if (currentClientPc === item.id) {
                                   resetClientScreenLocally();
                               }
