@@ -47,12 +47,26 @@
             <div class="flex items-center space-x-2">
                 <button type="button" onclick="toggleClientChatDrawer()" class="bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 border border-indigo-500/40 text-xs font-bold py-1.5 px-3 rounded-lg transition flex items-center gap-1.5 relative">
                     <i class="fa-solid fa-comments text-[12px]"></i> Chat Pusat Akses
-                    <span id="clientChatBadge" class="hidden w-2 h-2 rounded-full bg-rose-500 absolute -top-1 -right-1 animate-ping"></span>
+                    <span id="clientChatBadge" class="hidden w-2.5 h-2.5 rounded-full bg-rose-500 absolute -top-1 -right-1 animate-ping"></span>
                 </button>
                 <button type="button" onclick="handleEndClientSession()" class="bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 border border-rose-500/30 text-xs font-bold py-1.5 px-3 rounded-lg transition flex items-center gap-1.5">
                     <i class="fa-solid fa-right-from-bracket text-[10px]"></i> Tamatkan Sesi
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- POP-UP TOAST NOTIFIKASI CHAT CLIENT (VISUAL) -->
+    <div id="chatToastNotification" class="hidden fixed top-16 right-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white p-3.5 rounded-2xl shadow-2xl z-50 flex items-start gap-3 border border-indigo-400/50 max-w-xs animate-bounce cursor-pointer transition-all" onclick="toggleClientChatDrawer()">
+        <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center font-bold text-base shrink-0">
+            💬
+        </div>
+        <div class="flex-1 overflow-hidden">
+            <div class="flex items-center justify-between gap-1">
+                <span id="toastSender" class="font-extrabold text-[11px] truncate text-indigo-100">📢 GURU PUSAT AKSES</span>
+                <span class="text-[9px] bg-white/20 px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider shrink-0">Mesej Baharu</span>
+            </div>
+            <p id="toastMessage" class="text-xs font-semibold truncate mt-0.5 text-white">Taip mesej...</p>
         </div>
     </div>
 
@@ -429,6 +443,7 @@
         let isChatEnabled = true;
         let currentClientPc = "PC-05";
         let clientTimerInterval = null;
+        let toastTimeout = null;
 
         function loadHistoryFromStorage() {
             const savedLogs = localStorage.getItem('pusat_akses_history_logs');
@@ -467,7 +482,6 @@
             }
         }
 
-        // FUNGSI MEMATIKAN / MENGHIDUPKAN CHAT DARI GURU
         function toggleAdminChatStatus() {
             const toggle = document.getElementById('adminChatToggle');
             isChatEnabled = toggle ? toggle.checked : true;
@@ -503,15 +517,39 @@
 
         function toggleClientChatDrawer() {
             const drawer = document.getElementById('clientChatDrawer');
+            const toast = document.getElementById('chatToastNotification');
+
             drawer?.classList.toggle('hidden');
             document.getElementById('clientChatBadge')?.classList.add('hidden');
+            if (toast) toast.classList.add('hidden');
+
             renderClientChat();
         }
 
-        // PENGEKSTRAKAN NAMA PERTAMA (FIRST NAME)
         function getFirstName(fullName) {
             if (!fullName) return 'Murid';
             return fullName.trim().split(' ')[0];
+        }
+
+        // FUNGSI MEMAPARKAN TOAST NOTIFIKASI CHAT VISUAL
+        function showChatToast(sender, message) {
+            const toast = document.getElementById('chatToastNotification');
+            const toastSender = document.getElementById('toastSender');
+            const toastMessage = document.getElementById('toastMessage');
+
+            if (toast && toastSender && toastMessage) {
+                toastSender.innerText = sender;
+                toastMessage.innerText = message;
+                
+                toast.classList.remove('hidden');
+
+                if (toastTimeout) clearTimeout(toastTimeout);
+
+                // Sembunyikan notifikasi automatik selepas 5 saat
+                toastTimeout = setTimeout(() => {
+                    toast.classList.add('hidden');
+                }, 5000);
+            }
         }
 
         async function sendClientMessage(e) {
@@ -655,9 +693,23 @@
                           renderClientChat();
                           renderAdminChat();
 
-                          // Tunjukkan indikator mesej baharu di Client jika drawer tertutup
+                          // JIKA MESEJ DAHANTAR OLEH ORANG LAIN (BUKAN PC CLIENT INI)
                           if (payload.new.sender_pc !== currentClientPc) {
-                              document.getElementById('clientChatBadge')?.classList.remove('hidden');
+                              const isRelevant = payload.new.recipient_pc === 'ALL' || payload.new.recipient_pc === currentClientPc;
+
+                              if (isRelevant) {
+                                  // 1. Tunjukkan indikator merah berkerlip
+                                  document.getElementById('clientChatBadge')?.classList.remove('hidden');
+
+                                  // 2. Paparkan Pop-up Toast Visual jika tetingkap chat tertutup
+                                  const drawer = document.getElementById('clientChatDrawer');
+                                  if (drawer && drawer.classList.contains('hidden')) {
+                                      showChatToast(
+                                          payload.new.sender_pc === 'GURU' ? '📢 GURU PUSAT AKSES' : '[' + payload.new.sender_pc + '] ' + payload.new.sender_name,
+                                          payload.new.message
+                                      );
+                                  }
+                              }
                           }
                       }
                   }).subscribe();
