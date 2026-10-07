@@ -126,7 +126,6 @@
                         </div>
                     </div>
 
-                    <!-- PENGASINGAN TAHUN/TINGKATAN DAN NAMA KELAS -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Tahun / Tingkatan</label>
@@ -154,7 +153,6 @@
                         </div>
                     </div>
 
-                    <!-- PILIHAN TEMPOH MASA BAHARU -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Tempoh Masa Sesi</label>
@@ -194,8 +192,10 @@
             </div>
         </section>
 
-        <!-- VIEW 2: DASHBOARD ADMIN -->
+        <!-- VIEW 2: DASHBOARD ADMIN & REKOD LOG -->
         <section id="view-admin" class="hidden w-full space-y-6">
+
+            <!-- KOTAK STATISTIK -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl flex items-center gap-4">
                     <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-lg font-bold">
@@ -235,21 +235,64 @@
                 </div>
             </div>
 
-            <div class="flex flex-wrap items-center justify-between gap-4 bg-slate-800 border border-slate-700 p-4 rounded-2xl">
-                <div>
-                    <h2 class="text-lg font-black text-white">Status Live 20 PC Pusat Akses</h2>
-                    <p class="text-xs text-slate-400">Paparan pemantauan real-time status penggunaan komputer murid</p>
+            <!-- SKRIN GRID 20 PC LIVE -->
+            <div>
+                <div class="flex flex-wrap items-center justify-between gap-4 bg-slate-800 border border-slate-700 p-4 rounded-2xl mb-4">
+                    <div>
+                        <h2 class="text-lg font-black text-white">Status Live 20 PC Pusat Akses</h2>
+                        <p class="text-xs text-slate-400">Paparan pemantauan real-time status penggunaan komputer murid</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="resetAllSessions()" class="bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/30 font-bold text-xs py-2 px-3 rounded-lg transition flex items-center gap-2">
+                            <i class="fa-solid fa-power-off"></i> Reset Semua PC
+                        </button>
+                    </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <button type="button" onclick="resetAllSessions()" class="bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/30 font-bold text-xs py-2 px-3 rounded-lg transition flex items-center gap-2">
-                        <i class="fa-solid fa-power-off"></i> Reset Semua PC
-                    </button>
+
+                <div id="adminGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    <!-- GRID CARDS -->
                 </div>
             </div>
 
-            <div id="adminGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                <!-- GRID CARDS -->
+            <!-- BAHAGIAN JADUAL LOG PENGGUNAAN KOMPUTER (UNTUK LAPORAN & CETAKAN) -->
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl mt-8">
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h3 class="text-lg font-extrabold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-file-invoice text-indigo-400"></i> Log Penggunaan Komputer Pusat Akses
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Senarai rekod kehadiran dan sesi murid yang berdaftar</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="openPrintTab()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs py-2 px-4 rounded-xl shadow-lg transition flex items-center gap-2">
+                            <i class="fa-solid fa-print"></i> Cetak Laporan Log (Tab Baharu)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-700 text-slate-300 font-bold uppercase bg-slate-900/50">
+                                <th class="p-3">Bil</th>
+                                <th class="p-3">Tarikh / Masa</th>
+                                <th class="p-3">No. PC</th>
+                                <th class="p-3">Nama Murid</th>
+                                <th class="p-3">Tahun / Kelas</th>
+                                <th class="p-3">Tujuan Penggunaan</th>
+                                <th class="p-3">Masa (Min)</th>
+                                <th class="p-3">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logTableBody" class="divide-y divide-slate-700/50 text-slate-200">
+                            <tr>
+                                <td colspan="8" class="text-center p-6 text-slate-500">Tiada rekod log penggunaan buat masa ini.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
+
         </section>
 
     </main>
@@ -301,6 +344,7 @@
                 btnClient.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 text-slate-400 hover:text-white";
                 btnAdmin.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 bg-indigo-600 text-white shadow-md";
                 renderAdminGrid();
+                renderLogTable();
             }
         }
 
@@ -320,7 +364,6 @@
                 return false;
             }
 
-            // Gabungkan Tahun dan Nama Kelas untuk disimpan dalam medan student_class (contoh: "Tahun 3 Cemerlang")
             const fullClassDetails = studentYear + " " + classNameInput;
 
             window.onbeforeunload = function(e) {
@@ -414,6 +457,7 @@
                 }
 
                 renderAdminGrid();
+                renderLogTable();
             }, 1000);
         }
 
@@ -523,6 +567,148 @@
             document.getElementById('statTotalToday').innerText = activeCount + expiredCount;
         }
 
+        // FUNGSI MEMAPARKAN JADUAL REKOD LOG IN-APP
+        function renderLogTable() {
+            const tableBody = document.getElementById('logTableBody');
+            if(!tableBody) return;
+
+            let logCount = 0;
+            let rowsHTML = '';
+
+            Object.keys(pcSessions).forEach(pcNo => {
+                let pc = pcSessions[pcNo];
+                if(pc.studentName && pc.studentName !== '') {
+                    logCount++;
+                    let todayDate = new Date().toLocaleDateString('ms-MY');
+                    let statusBadge = pc.status === 'ACTIVE' 
+                        ? '<span class="text-blue-400 font-bold">AKTIF</span>' 
+                        : '<span class="text-rose-400 font-bold">TAMAT</span>';
+
+                    rowsHTML += `<tr class="hover:bg-slate-700/30">
+                        <td class="p-3 font-semibold">${logCount}</td>
+                        <td class="p-3">${todayDate}</td>
+                        <td class="p-3 font-bold text-indigo-400">${pc.pcNo}</td>
+                        <td class="p-3 font-bold">${pc.studentName}</td>
+                        <td class="p-3">${pc.studentClass || '-'}</td>
+                        <td class="p-3">${pc.purpose || '-'}</td>
+                        <td class="p-3">${pc.duration} Minit</td>
+                        <td class="p-3">${statusBadge}</td>
+                    </tr>`;
+                }
+            });
+
+            if(logCount === 0) {
+                tableBody.innerHTML = '<tr><td colspan="8" class="text-center p-6 text-slate-500">Tiada rekod log penggunaan buat masa ini.</td></tr>';
+            } else {
+                tableBody.innerHTML = rowsHTML;
+            }
+        }
+
+        // FUNGSI MEMBUKA TAB BAHARU A4 KHAS UNTUK CETAKAN RASMI LOG (TANPA LAJUR STATUS)
+        function openPrintTab() {
+            let printWindow = window.open('', '_blank');
+            let todayDate = new Date().toLocaleDateString('ms-MY', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+            let rowsHTML = '';
+            let logCount = 0;
+
+            Object.keys(pcSessions).forEach(pcNo => {
+                let pc = pcSessions[pcNo];
+                if(pc.studentName && pc.studentName !== '') {
+                    logCount++;
+                    rowsHTML += `
+                        <tr>
+                            <td style="text-align:center;">${logCount}</td>
+                            <td style="text-align:center;">${todayDate}</td>
+                            <td style="text-align:center; font-weight:bold;">${pc.pcNo}</td>
+                            <td style="text-transform:uppercase;">${pc.studentName}</td>
+                            <td>${pc.studentClass || '-'}</td>
+                            <td>${pc.purpose || '-'}</td>
+                            <td style="text-align:center;">${pc.duration} Minit</td>
+                        </tr>
+                    `;
+                }
+            });
+
+            if(logCount === 0) {
+                rowsHTML = `<tr><td colspan="7" style="text-align:center; padding: 20px;">Tiada rekod penggunaan murid berdaftar buat masa ini.</td></tr>`;
+            }
+
+            let printContent = `
+                <!DOCTYPE html>
+                <html lang="ms">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Rekod Log Penggunaan Pusat Akses Sekolah</title>
+                    <style>
+                        @page { size: A4 landscape; margin: 15mm; }
+                        body { font-family: 'Arial', sans-serif; font-size: 11pt; color: #000; margin: 0; padding: 10px; }
+                        .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+                        .header h2 { margin: 0; font-size: 16pt; text-transform: uppercase; }
+                        .header p { margin: 5px 0 0 0; font-size: 10pt; color: #333; }
+                        .meta-info { margin-bottom: 15px; display: flex; justify-content: space-between; font-size: 10pt; font-weight: bold; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                        th, td { border: 1px solid #000; padding: 8px 10px; font-size: 10pt; }
+                        th { background-color: #f2f2f2; text-transform: uppercase; font-size: 9pt; }
+                        .footer { margin-top: 40px; display: flex; justify-content: space-between; font-size: 10pt; }
+                        .signature-box { width: 250px; text-align: center; }
+                        .signature-line { margin-top: 50px; border-bottom: 1px solid #000; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h2>REKOD LOG PENGGUNAAN KOMPUTER PUSAT AKSES SEKOLAH</h2>
+                        <p>Laporan Rasmi Kehadiran & Sesi Penggunaan Komputer Digital Murid</p>
+                    </div>
+
+                    <div class="meta-info">
+                        <div>Tarikh Cetakan: ${todayDate}</div>
+                        <div>Jumlah Rekod Sesi: ${logCount} Sesi</div>
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 5%;">Bil</th>
+                                <th style="width: 15%;">Tarikh</th>
+                                <th style="width: 10%;">No. PC</th>
+                                <th style="width: 32%;">Nama Penuh Murid</th>
+                                <th style="width: 18%;">Tahun / Kelas</th>
+                                <th style="width: 12%;">Tujuan</th>
+                                <th style="width: 8%;">Tempoh</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHTML}
+                        </tbody>
+                    </table>
+
+                    <div class="footer">
+                        <div class="signature-box">
+                            <p>Disediakan Oleh:</p>
+                            <div class="signature-line"></div>
+                            <p style="margin-top: 5px; font-weight: bold;">( Penyelaras Pusat Akses )</p>
+                        </div>
+                        <div class="signature-box">
+                            <p>Disahkan Oleh:</p>
+                            <div class="signature-line"></div>
+                            <p style="margin-top: 5px; font-weight: bold;">( Guru Besar / PK Pentadbiran )</p>
+                        </div>
+                    </div>
+
+                    <script>
+                        window.onload = function() {
+                            window.print();
+                        }
+                    <\/script>
+                </body>
+                </html>
+            `;
+
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+        }
+
         async function stopAdminSession(pcNo) {
             if(db) {
                 try {
@@ -553,6 +739,7 @@
             }
 
             renderAdminGrid();
+            renderLogTable();
         }
 
         async function resetAllSessions() {
@@ -580,6 +767,7 @@
                 }
                 resetClientScreenLocally();
                 renderAdminGrid();
+                renderLogTable();
             }
         }
 
@@ -594,6 +782,8 @@
                             pcSessions[item.id].studentName = item.student_name || '';
                             pcSessions[item.id].studentClass = item.student_class || '';
                             pcSessions[item.id].purpose = item.purpose || '';
+                            pcSessions[item.id].duration = item.duration || 30;
+                            
                             if(item.end_time && item.status === 'ACTIVE') {
                                 let now = new Date();
                                 let end = new Date(item.end_time);
@@ -612,6 +802,7 @@
                         }
                     });
                     renderAdminGrid();
+                    renderLogTable();
                 }
             } catch(err) {
                 console.error("Ralat Fetch Data:", err);
@@ -629,6 +820,7 @@
                           pcSessions[item.id].studentName = item.student_name || '';
                           pcSessions[item.id].studentClass = item.student_class || '';
                           pcSessions[item.id].purpose = item.purpose || '';
+                          pcSessions[item.id].duration = item.duration || 30;
                           
                           if(item.end_time && item.status === 'ACTIVE') {
                               let now = new Date();
@@ -643,6 +835,7 @@
                               }
                           }
                           renderAdminGrid();
+                          renderLogTable();
                       }
                   }).subscribe();
             } catch(err) {
