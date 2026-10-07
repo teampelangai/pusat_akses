@@ -380,7 +380,17 @@
                         </h3>
                         <p class="text-xs text-slate-400 mt-0.5">Senarai rekod kehadiran dan sesi murid yang berdaftar (Disusun Mengikut No. PC)</p>
                     </div>
-                    <div class="flex items-center gap-2">
+                    
+                    <!-- BUTANG EXPORT, IMPORT & CETAKAN LOG -->
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button type="button" onclick="exportLogToCSV()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2 px-3 rounded-xl shadow-lg transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-file-excel"></i> Muat Turun CSV
+                        </button>
+                        <button type="button" onclick="triggerCSVImport()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs py-2 px-3 rounded-xl shadow-lg transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-file-import"></i> Import Log (CSV)
+                        </button>
+                        <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="importLogFromCSV(event)">
+                        
                         <button type="button" onclick="openPrintTab()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs py-2 px-4 rounded-xl shadow-lg transition flex items-center gap-2">
                             <i class="fa-solid fa-print"></i> Cetak Laporan Log (Tab Baharu)
                         </button>
@@ -469,6 +479,92 @@
                 }
                 return (a.startTime || '').localeCompare(b.startTime || '');
             });
+        }
+
+        // FUNGSI EXPORT LOG KE FAIL CSV
+        function exportLogToCSV() {
+            const sortedHistory = getSortedUsageHistory();
+            if (sortedHistory.length === 0) {
+                alert("Tiada rekod log penggunaan untuk dimuat turun.");
+                return;
+            }
+
+            let csvContent = "\uFEFF"; // UTF-8 BOM untuk sokongan penterjemahan aksara khas Excel
+            csvContent += "Bil,Tarikh,No PC,Nama Penuh Murid,Tahun / Kelas,Tujuan,Masa Mula,Masa Tamat\n";
+
+            sortedHistory.forEach((item, index) => {
+                let name = `"${(item.studentName || '').replace(/"/g, '""')}"`;
+                let cls = `"${(item.studentClass || '').replace(/"/g, '""')}"`;
+                let purp = `"${(item.purpose || '').replace(/"/g, '""')}"`;
+                let endTime = item.endTime || 'Sedang Aktif...';
+
+                csvContent += `${index + 1},${item.date},${item.pcNo},${name},${cls},${purp},${item.startTime || '-'},${endTime}\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            const todayStr = new Date().toISOString().slice(0, 10);
+            
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Log_PusatAkses_${todayStr}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // FUNGSI UNTUK BUKA TETAPAN INPUT FAIL CSV
+        function triggerCSVImport() {
+            document.getElementById('csvFileInput').click();
+        }
+
+        // FUNGSI IMPORT LOG DARI FAIL CSV
+        function importLogFromCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const lines = text.split('\n');
+                let countImported = 0;
+
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+
+                    // Parse CSV dengan mengendalikan petik ganda (quotes)
+                    const cols = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || line.split(',');
+                    
+                    if (cols.length >= 7) {
+                        const cleanCols = cols.map(c => c.replace(/^"|"$/g, '').replace(/""/g, '"').trim());
+                        
+                        const date = cleanCols[1];
+                        const pcNo = cleanCols[2];
+                        const studentName = cleanCols[3];
+                        const studentClass = cleanCols[4];
+                        const purpose = cleanCols[5];
+                        const startTime = cleanCols[6];
+                        const endTime = cleanCols[7] || 'Sedang Aktif...';
+
+                        // Semak jika rekod sudah wujud untuk mengelakkan penduaan
+                        const isExist = usageHistory.some(h => h.pcNo === pcNo && h.studentName === studentName && h.date === date && h.startTime === startTime);
+                        
+                        if (!isExist && date && pcNo && studentName) {
+                            usageHistory.push({
+                                date, pcNo, studentName, studentClass, purpose, startTime, endTime
+                            });
+                            countImported++;
+                        }
+                    }
+                }
+
+                saveHistoryToStorage();
+                renderLogTable();
+                alert(`Berjaya mengimport ${countImported} rekod log baharu!`);
+                event.target.value = ''; // Reset input fail
+            };
+            reader.readAsText(file);
         }
 
         // FUNGSI MENGEMASKINI MASA TAMAT SEBENAR PADA LOG (PEMBAIKAN MUKTAMAD)
