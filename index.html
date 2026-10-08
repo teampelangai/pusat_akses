@@ -1054,8 +1054,8 @@
             reader.readAsText(file);
         }
 
-        async function recordActualEndTime(pcNo) {
-            const actualEndTimeStr = new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
+        async function recordActualEndTime(pcNo, exactEndTimeStr = null) {
+            const actualEndTimeStr = exactEndTimeStr || new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
             
             let targetLog = usageHistory.find(item => item.pcNo === pcNo && (!item.endTime || item.endTime.includes('Aktif') || item.endTime === '-'));
 
@@ -1491,7 +1491,8 @@
                     clearInterval(clientTimerInterval);
                     resetClientScreenLocally();
 
-                    await recordActualEndTime(pcNo);
+                    const exactEndTimeStr = new Date(endTimeObj).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
+                    await recordActualEndTime(pcNo, exactEndTimeStr);
 
                     if(db) {
                         try {
@@ -1861,7 +1862,6 @@
                             return;
                         }
 
-                        // Pastikan objek tempatan dibina jika belum wujud
                         if (!pcSessions[item.id]) {
                             pcSessions[item.id] = { pcNo: item.id, status: 'AVAILABLE', studentName: '', studentClass: '', purpose: '', remainingSeconds: 0 };
                         }
@@ -1873,7 +1873,7 @@
                             pcSessions[item.id].purpose = item.purpose || '';
                             pcSessions[item.id].duration = item.duration || 30;
 
-                            if(item.status === 'ACTIVE' && item.end_time) {
+                            if(item.end_time && (item.status === 'ACTIVE' || item.status === 'EXPIRED')) {
                                 let now = new Date();
                                 let end = new Date(item.end_time);
                                 let remaining = Math.floor((end - now) / 1000);
@@ -1884,6 +1884,10 @@
                                 } else {
                                     pcSessions[item.id].remainingSeconds = 0;
                                     pcSessions[item.id].status = 'EXPIRED';
+                                    
+                                    // Serta-merta kemaskini log dengan masa tamat tepat jika masih bertulis Sedang Aktif...
+                                    const exactEndTimeStr = end.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
+                                    recordActualEndTime(item.id, exactEndTimeStr);
                                 }
                             } else if (item.status === 'AVAILABLE') {
                                 pcSessions[item.id].remainingSeconds = 0;
@@ -1949,6 +1953,10 @@
                               let end = new Date(item.end_time);
                               let remaining = Math.floor((end - now) / 1000);
                               pcSessions[item.id].remainingSeconds = Math.max(0, remaining);
+                          } else if (item.status === 'EXPIRED' && item.end_time) {
+                              let end = new Date(item.end_time);
+                              const exactEndTimeStr = end.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
+                              recordActualEndTime(item.id, exactEndTimeStr);
                           }
                           renderAdminGrid();
                       }
@@ -2031,6 +2039,11 @@
             Object.keys(pcSessions).forEach(id => {
                 if(pcSessions[id].status === 'ACTIVE' && pcSessions[id].remainingSeconds > 0) {
                     pcSessions[id].remainingSeconds--;
+                    if(pcSessions[id].remainingSeconds === 0) {
+                        pcSessions[id].status = 'EXPIRED';
+                        const exactEndTimeStr = new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
+                        recordActualEndTime(id, exactEndTimeStr);
+                    }
                 }
             });
             renderAdminGrid();
