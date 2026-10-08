@@ -56,7 +56,7 @@
         </div>
     </div>
 
-    <!-- POP-UP TOAST NOTIFIKASI CHAT CLIENT (VISUAL) -->
+    <!-- POP-UP TOAST NOTIFIKASI CHAT CLIENT -->
     <div id="chatToastNotification" class="hidden fixed top-16 right-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white p-3.5 rounded-2xl shadow-2xl z-50 flex items-start gap-3 border border-indigo-400/50 max-w-xs animate-bounce cursor-pointer transition-all" onclick="toggleClientChatDrawer()">
         <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center font-bold text-base shrink-0">
             💬
@@ -70,7 +70,7 @@
         </div>
     </div>
 
-    <!-- TETINGKAP CHAT CLIENT (MURID) -->
+    <!-- TETINGKAP CHAT CLIENT -->
     <div id="clientChatDrawer" class="hidden fixed bottom-4 right-4 w-80 sm:w-96 bg-slate-900 border border-indigo-500/40 rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col h-[420px] transition-all">
         <div class="bg-indigo-600 px-4 py-3 flex items-center justify-between text-white">
             <div class="flex items-center gap-2">
@@ -378,7 +378,7 @@
                         <h3 class="text-lg font-extrabold text-white flex items-center gap-2">
                             <i class="fa-solid fa-file-invoice text-indigo-400"></i> Log Penggunaan Komputer Pusat Akses
                         </h3>
-                        <p class="text-xs text-slate-400 mt-0.5">Senarai rekod kehadiran dan sesi murid yang berdaftar (Disusun Mengikut No. PC)</p>
+                        <p class="text-xs text-slate-400 mt-0.5">Senarai rekod kehadiran dan sesi murid yang berdaftar (Awan Supabase Cloud)</p>
                     </div>
                     
                     <!-- BUTANG EXPORT, IMPORT & CETAKAN LOG -->
@@ -469,6 +469,33 @@
             localStorage.setItem('pusat_akses_history_logs', JSON.stringify(usageHistory));
         }
 
+        // FUNGSI MEMUATKAN REKOD LOG DARIPADA SUPABASE CLOUD DENGAN FALLBACK LOCALSTORAGE
+        async function fetchLogsFromSupabase() {
+            loadHistoryFromStorage();
+            renderLogTable();
+
+            if (!db) return;
+            try {
+                const { data, error } = await db.from('usage_logs').select('*').order('id', { ascending: false }).limit(200);
+                if (data && data.length > 0) {
+                    usageHistory = data.map(item => ({
+                        dbId: item.id,
+                        date: item.date,
+                        pcNo: item.pc_no,
+                        studentName: item.student_name,
+                        studentClass: item.student_class,
+                        purpose: item.purpose,
+                        startTime: item.start_time,
+                        endTime: item.end_time || 'Sedang Aktif...'
+                    }));
+                    saveHistoryToStorage();
+                    renderLogTable();
+                }
+            } catch (e) {
+                console.error("Gagal menarik log dari Supabase:", e);
+            }
+        }
+
         // FUNGSI UNTUK SUSUN REKOD MENGIKUT NOMBOR PC MENAIK (PC-01 -> PC-20)
         function getSortedUsageHistory() {
             return [...usageHistory].sort((a, b) => {
@@ -489,7 +516,7 @@
                 return;
             }
 
-            let csvContent = "\uFEFF"; // UTF-8 BOM untuk sokongan penterjemahan aksara khas Excel
+            let csvContent = "\uFEFF";
             csvContent += "Bil,Tarikh,No PC,Nama Penuh Murid,Tahun / Kelas,Tujuan,Masa Mula,Masa Tamat\n";
 
             sortedHistory.forEach((item, index) => {
@@ -513,27 +540,26 @@
             document.body.removeChild(link);
         }
 
-        // FUNGSI UNTUK BUKA TETAPAN INPUT FAIL CSV
         function triggerCSVImport() {
             document.getElementById('csvFileInput').click();
         }
 
-        // FUNGSI IMPORT LOG DARI FAIL CSV
+        // FUNGSI IMPORT LOG DARI FAIL CSV TERUS KE SUPABASE & LOCALSTORAGE
         function importLogFromCSV(event) {
             const file = event.target.files[0];
             if (!file) return;
 
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = async function(e) {
                 const text = e.target.result;
                 const lines = text.split('\n');
                 let countImported = 0;
+                let newEntries = [];
 
                 for (let i = 1; i < lines.length; i++) {
                     const line = lines[i].trim();
                     if (!line) continue;
 
-                    // Parse CSV dengan mengendalikan petik ganda (quotes)
                     const cols = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || line.split(',');
                     
                     if (cols.length >= 7) {
@@ -547,12 +573,13 @@
                         const startTime = cleanCols[6];
                         const endTime = cleanCols[7] || 'Sedang Aktif...';
 
-                        // Semak jika rekod sudah wujud untuk mengelakkan penduaan
                         const isExist = usageHistory.some(h => h.pcNo === pcNo && h.studentName === studentName && h.date === date && h.startTime === startTime);
                         
                         if (!isExist && date && pcNo && studentName) {
-                            usageHistory.push({
-                                date, pcNo, studentName, studentClass, purpose, startTime, endTime
+                            const newLogObj = { date, pcNo, studentName, studentClass, purpose, startTime, endTime };
+                            usageHistory.push(newLogObj);
+                            newEntries.push({
+                                date, pc_no: pcNo, student_name: studentName, student_class: studentClass, purpose, start_time: startTime, end_time: endTime
                             });
                             countImported++;
                         }
@@ -561,22 +588,44 @@
 
                 saveHistoryToStorage();
                 renderLogTable();
+
+                if (newEntries.length > 0 && db) {
+                    try {
+                        await db.from('usage_logs').insert(newEntries);
+                        await fetchLogsFromSupabase();
+                    } catch(err) {
+                        console.error("Gagal simpan import ke Supabase:", err);
+                    }
+                }
+
                 alert(`Berjaya mengimport ${countImported} rekod log baharu!`);
-                event.target.value = ''; // Reset input fail
+                event.target.value = '';
             };
             reader.readAsText(file);
         }
 
-        // FUNGSI MENGEMASKINI MASA TAMAT SEBENAR PADA LOG (PEMBAIKAN MUKTAMAD)
-        function recordActualEndTime(pcNo) {
+        // FUNGSI MENGEMASKINI MASA TAMAT SEBENAR KE SUPABASE & LOCALSTORAGE (DENGAN FALLBACK)
+        async function recordActualEndTime(pcNo) {
             const actualEndTimeStr = new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
             
-            for (let i = usageHistory.length - 1; i >= 0; i--) {
-                if (usageHistory[i].pcNo === pcNo) {
-                    if (!usageHistory[i].endTime || usageHistory[i].endTime.includes('Aktif') || usageHistory[i].endTime === '-') {
-                        usageHistory[i].endTime = actualEndTimeStr;
-                        saveHistoryToStorage();
-                        break;
+            let targetLog = usageHistory.find(item => item.pcNo === pcNo && (!item.endTime || item.endTime.includes('Aktif') || item.endTime === '-'));
+
+            if (targetLog) {
+                targetLog.endTime = actualEndTimeStr;
+                saveHistoryToStorage();
+
+                if (db) {
+                    try {
+                        if (targetLog.dbId) {
+                            await db.from('usage_logs').update({ end_time: actualEndTimeStr }).eq('id', targetLog.dbId);
+                        } else {
+                            await db.from('usage_logs')
+                                .update({ end_time: actualEndTimeStr })
+                                .eq('pc_no', pcNo)
+                                .eq('end_time', 'Sedang Aktif...');
+                        }
+                    } catch(e) {
+                        console.error("Gagal update masa tamat di Supabase:", e);
                     }
                 }
             }
@@ -602,7 +651,7 @@
                 btnClient.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 text-slate-400 hover:text-white";
                 btnAdmin.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 bg-indigo-600 text-white shadow-md";
                 renderAdminGrid();
-                renderLogTable();
+                fetchLogsFromSupabase();
                 renderAdminChat();
             }
         }
@@ -836,99 +885,124 @@
             } catch(e) {}
         }
 
-        async function handleStartSession(event) {
-            if (event) event.preventDefault();
+        // FUNGSI MULA SESI DENGAN REKOD LOG DUA HALA (SUPABASE & LOCALSTORAGE)
+       
 
-            const pcNo = document.getElementById('clientPcNo')?.value.trim() || "PC-05";
-            currentClientPc = pcNo;
+async function handleStartSession(event) {
+    if (event) event.preventDefault();
 
-            const name = document.getElementById('clientStudentName')?.value.trim() || "Murid";
-            const studentYear = document.getElementById('clientStudentYear')?.value.trim();
-            const classNameInput = document.getElementById('clientClassName')?.value.trim();
-            const durationInput = document.getElementById('clientDuration')?.value;
-            const duration = parseInt(durationInput, 10) || 30;
-            const purpose = document.getElementById('clientPurpose')?.value.trim() || "Carian";
+    const pcNo = document.getElementById('clientPcNo')?.value.trim() || "PC-05";
+    currentClientPc = pcNo;
 
-            if (!studentYear || !classNameInput) {
-                alert("Sila lengkapkan pilihan Tahun/Tingkatan dan Nama Kelas!");
-                return false;
-            }
+    const name = document.getElementById('clientStudentName')?.value.trim() || "Murid";
+    const studentYear = document.getElementById('clientStudentYear')?.value.trim();
+    const classNameInput = document.getElementById('clientClassName')?.value.trim();
+    const durationInput = document.getElementById('clientDuration')?.value;
+    const duration = parseInt(durationInput, 10) || 30;
+    const purpose = document.getElementById('clientPurpose')?.value.trim() || "Carian";
 
-            const fullClassDetails = studentYear + " " + classNameInput;
-            const now = new Date();
-            const endTime = new Date(now.getTime() + duration * 60000);
+    if (!studentYear || !classNameInput) {
+        alert("Sila lengkapkan pilihan Tahun/Tingkatan dan Nama Kelas!");
+        return false;
+    }
 
-            const todayDate = now.toLocaleDateString('ms-MY', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            const startTimeStr = now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
+    const fullClassDetails = studentYear + " " + classNameInput;
+    const now = new Date();
+    const endTime = new Date(now.getTime() + duration * 60000);
 
-            window.onbeforeunload = function(e) {
-                const message = "Adakah anda pasti untuk meninggalkan halaman ini?";
-                e = e || window.event;
-                if (e) e.returnValue = message;
-                return message;
-            };
+    const todayDate = now.toLocaleDateString('ms-MY', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const startTimeStr = now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
 
-            pcSessions[pcNo] = {
-                pcNo: pcNo,
-                status: 'ACTIVE',
-                studentName: name,
-                studentClass: fullClassDetails,
-                purpose: purpose,
-                duration: duration,
-                endTime: endTime,
-                remainingSeconds: duration * 60
-            };
+    window.onbeforeunload = function(e) {
+        const message = "Adakah anda pasti untuk meninggalkan halaman ini?";
+        e = e || window.event;
+        if (e) e.returnValue = message;
+        return message;
+    };
 
-            const newLogEntry = {
+    pcSessions[pcNo] = {
+        pcNo: pcNo,
+        status: 'ACTIVE',
+        studentName: name,
+        studentClass: fullClassDetails,
+        purpose: purpose,
+        duration: duration,
+        endTime: endTime,
+        remainingSeconds: duration * 60
+    };
+
+    // Objek Log Baharu
+    const newLogItem = {
+        date: todayDate,
+        pcNo: pcNo,
+        studentName: name,
+        studentClass: fullClassDetails,
+        purpose: purpose,
+        startTime: startTimeStr,
+        endTime: 'Sedang Aktif...',
+        dbId: null
+    };
+
+    // 1. TAMPILKAN LOG KE SKRIN DENGAN SERTA-MERTA
+    usageHistory.unshift(newLogItem);
+    saveHistoryToStorage();
+    renderLogTable();
+
+    // 2. HANTAR KE SUPABASE
+    if (db) {
+        try {
+            const { data, error } = await db.from('usage_logs').insert({
                 date: todayDate,
-                pcNo: pcNo,
-                studentName: name,
-                studentClass: fullClassDetails,
+                pc_no: pcNo,
+                student_name: name,
+                student_class: fullClassDetails,
                 purpose: purpose,
-                startTime: startTimeStr,
-                endTime: 'Sedang Aktif...'
-            };
-            
-            const isDuplicate = usageHistory.some(h => h.pcNo === pcNo && h.studentName === name && h.date === todayDate && h.startTime === startTimeStr);
-            if (!isDuplicate) {
-                usageHistory.push(newLogEntry);
+                start_time: startTimeStr,
+                end_time: 'Sedang Aktif...'
+            }).select();
+
+            if (error) {
+                console.error("Ralat Insert Supabase:", error);
+                alert("Amaran RLS Supabase: Data log tidak dapat disimpan ke Supabase Cloud. Sila matikan RLS pada jadual usage_logs di Supabase!");
+            } else if (data && data.length > 0) {
+                usageHistory[0].dbId = data[0].id;
                 saveHistoryToStorage();
             }
-
-            localStorage.setItem('active_pc_session', JSON.stringify({
-                pcNo, studentName: name, studentClass: fullClassDetails, purpose, duration, endTime, startTimeStr
-            }));
-
-            if (db) {
-                try {
-                    await db.from('pc_sessions').upsert({
-                        id: pcNo,
-                        pc_no: pcNo,
-                        status: 'ACTIVE',
-                        student_name: name,
-                        student_class: fullClassDetails,
-                        purpose: purpose,
-                        duration: duration,
-                        end_time: endTime.toISOString(),
-                        updated_at: new Date().toISOString()
-                    });
-                } catch(e) {
-                    console.error("Gagal simpan Supabase:", e);
-                }
-            }
-
-            document.getElementById('clientFormCard').classList.add('hidden');
-            document.getElementById('mainHeader').classList.add('hidden');
-            document.getElementById('clientMiniBarTimer').classList.remove('hidden');
-            document.getElementById('clientWorkspaceMessage').classList.remove('hidden');
-
-            document.getElementById('miniActivePcNo').innerText = pcNo;
-            document.getElementById('miniActiveStudentName').innerText = name;
-            document.getElementById('miniActiveStudentDetails').innerText = fullClassDetails + ' • ' + purpose;
-
-            startClientTimer(pcNo, endTime);
-            return false;
+        } catch(e) {
+            console.error("Gagal simpan usage_logs di Supabase:", e);
         }
+
+        try {
+            await db.from('pc_sessions').upsert({
+                id: pcNo,
+                pc_no: pcNo,
+                status: 'ACTIVE',
+                student_name: name,
+                student_class: fullClassDetails,
+                purpose: purpose,
+                duration: duration,
+                end_time: endTime.toISOString(),
+                updated_at: new Date().toISOString()
+            });
+        } catch(e) {}
+    }
+
+    localStorage.setItem('active_pc_session', JSON.stringify({
+        pcNo, studentName: name, studentClass: fullClassDetails, purpose, duration, endTime, startTimeStr
+    }));
+
+    document.getElementById('clientFormCard').classList.add('hidden');
+    document.getElementById('mainHeader').classList.add('hidden');
+    document.getElementById('clientMiniBarTimer').classList.remove('hidden');
+    document.getElementById('clientWorkspaceMessage').classList.remove('hidden');
+
+    document.getElementById('miniActivePcNo').innerText = pcNo;
+    document.getElementById('miniActiveStudentName').innerText = name;
+    document.getElementById('miniActiveStudentDetails').innerText = fullClassDetails + ' • ' + purpose;
+
+    startClientTimer(pcNo, endTime);
+    return false;
+}
 
         function startClientTimer(pcNo, endTimeObj) {
             if(clientTimerInterval) clearInterval(clientTimerInterval);
@@ -953,8 +1027,7 @@
                     window.onbeforeunload = null;
                     localStorage.removeItem('active_pc_session');
 
-                    // CATAT MASA TAMAT SEBENAR BILA PEMASA CUKUP 00:00
-                    recordActualEndTime(pcNo);
+                    await recordActualEndTime(pcNo);
 
                     if(db) {
                         try {
@@ -995,8 +1068,7 @@
                     } catch(e){}
                 }
 
-                // 1. RAKAM MASA TAMAT SEBENAR SEBELUM DATA LOKAL DIBERSIHKAN
-                recordActualEndTime(activePc);
+                await recordActualEndTime(activePc);
 
                 if(db) {
                     try {
@@ -1224,7 +1296,7 @@
         }
 
         async function stopAdminSession(pcNo) {
-            recordActualEndTime(pcNo);
+            await recordActualEndTime(pcNo);
 
             if(db) {
                 try {
@@ -1262,7 +1334,7 @@
             if(confirm("Adakah anda pasti untuk reset status SEMUA 20 Komputer?")) {
                 for(let i=1; i<=20; i++) {
                     let id = "PC-" + (i < 10 ? '0' + i : i);
-                    recordActualEndTime(id);
+                    await recordActualEndTime(id);
 
                     if(db) {
                         try {
@@ -1311,26 +1383,6 @@
                             pcSessions[item.id].studentClass = item.student_class || '';
                             pcSessions[item.id].purpose = item.purpose || '';
                             pcSessions[item.id].duration = item.duration || 30;
-                            
-                            if(item.student_name && item.student_name !== '' && item.status === 'ACTIVE') {
-                                const now = new Date();
-                                const todayDate = now.toLocaleDateString('ms-MY', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                                const startTimeStr = now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
-
-                                const isExist = usageHistory.some(h => h.pcNo === item.id && h.studentName === item.student_name && h.date === todayDate && (h.endTime === 'Sedang Aktif...' || !h.endTime));
-                                if (!isExist) {
-                                    usageHistory.push({
-                                        date: todayDate,
-                                        pcNo: item.id,
-                                        studentName: item.student_name,
-                                        studentClass: item.student_class,
-                                        purpose: item.purpose,
-                                        startTime: startTimeStr,
-                                        endTime: 'Sedang Aktif...'
-                                    });
-                                    saveHistoryToStorage();
-                                }
-                            }
 
                             if(item.end_time && item.status === 'ACTIVE') {
                                 let now = new Date();
@@ -1350,80 +1402,67 @@
                         }
                     });
                     renderAdminGrid();
-                    renderLogTable();
                 }
             } catch(err) {
                 console.error("Ralat Fetch Data:", err);
             }
         }
 
-        function setupRealtimeListener() {
-            if(!db) return;
-            try {
-                db.channel('public:pc_sessions')
-                  .on('postgres_changes', { event: '*', schema: 'public', table: 'pc_sessions' }, payload => {
-                      const item = payload.new;
-                      if (!item) return;
+        // REALTIME LISTENER SUPABASE
+       
+	function setupRealtimeListener() {
+    if(!db) return;
+    try {
+        // 1. LISTENER STATUS PC
+        db.channel('pc_sessions_channel')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'pc_sessions' }, payload => {
+              const item = payload.new;
+              if (!item) return;
 
-                      if (item.id === 'GLOBAL_CONFIG') {
-                          isChatEnabled = item.status !== 'MUTED';
-                          const toggle = document.getElementById('adminChatToggle');
-                          if (toggle) toggle.checked = isChatEnabled;
-                          document.getElementById('adminChatStatusText').innerText = isChatEnabled ? "Aktif" : "Mute/Tutup";
-                          document.getElementById('adminChatStatusText').className = isChatEnabled ? "text-emerald-400" : "text-rose-400";
-                          updateClientChatAvailability();
-                          return;
+              if (item.id === 'GLOBAL_CONFIG') {
+                  isChatEnabled = item.status !== 'MUTED';
+                  const toggle = document.getElementById('adminChatToggle');
+                  if (toggle) toggle.checked = isChatEnabled;
+                  document.getElementById('adminChatStatusText').innerText = isChatEnabled ? "Aktif" : "Mute/Tutup";
+                  document.getElementById('adminChatStatusText').className = isChatEnabled ? "text-emerald-400" : "text-rose-400";
+                  updateClientChatAvailability();
+                  return;
+              }
+
+              if(pcSessions[item.id]) {
+                  pcSessions[item.id].status = item.status;
+                  pcSessions[item.id].studentName = item.student_name || '';
+                  pcSessions[item.id].studentClass = item.student_class || '';
+                  pcSessions[item.id].purpose = item.purpose || '';
+                  pcSessions[item.id].duration = item.duration || 30;
+
+                  if (item.status === 'AVAILABLE') {
+                      pcSessions[item.id].remainingSeconds = 0;
+                      pcSessions[item.id].studentName = '';
+                      if (currentClientPc === item.id) {
+                          resetClientScreenLocally();
                       }
+                  }
+                  
+                  if(item.end_time && item.status === 'ACTIVE') {
+                      let now = new Date();
+                      let end = new Date(item.end_time);
+                      pcSessions[item.id].remainingSeconds = Math.max(0, Math.floor((end - now) / 1000));
+                  }
+                  renderAdminGrid();
+              }
+          }).subscribe();
 
-                      if(pcSessions[item.id]) {
-                          pcSessions[item.id].status = item.status;
-                          pcSessions[item.id].studentName = item.student_name || '';
-                          pcSessions[item.id].studentClass = item.student_class || '';
-                          pcSessions[item.id].purpose = item.purpose || '';
-                          pcSessions[item.id].duration = item.duration || 30;
+        // 2. LISTENER REALTIME UNTUK JADUAL LOG
+        db.channel('usage_logs_channel')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'usage_logs' }, () => {
+              fetchLogsFromSupabase();
+          }).subscribe();
 
-                          if(item.student_name && item.student_name !== '' && item.status === 'ACTIVE') {
-                              const now = new Date();
-                              const todayDate = now.toLocaleDateString('ms-MY', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                              const startTimeStr = now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
-
-                              const isExist = usageHistory.some(h => h.pcNo === item.id && h.studentName === item.student_name && h.date === todayDate && (h.endTime === 'Sedang Aktif...' || !h.endTime));
-                              if (!isExist) {
-                                  usageHistory.push({
-                                      date: todayDate,
-                                      pcNo: item.id,
-                                      studentName: item.student_name,
-                                      studentClass: item.student_class,
-                                      purpose: item.purpose,
-                                      startTime: startTimeStr,
-                                      endTime: 'Sedang Aktif...'
-                                  });
-                                  saveHistoryToStorage();
-                              }
-                          } else if (item.status === 'AVAILABLE') {
-                              pcSessions[item.id].remainingSeconds = 0;
-                              pcSessions[item.id].studentName = '';
-                              
-                              recordActualEndTime(item.id);
-
-                              if (currentClientPc === item.id) {
-                                  resetClientScreenLocally();
-                              }
-                          }
-                          
-                          if(item.end_time && item.status === 'ACTIVE') {
-                              let now = new Date();
-                              let end = new Date(item.end_time);
-                              pcSessions[item.id].remainingSeconds = Math.max(0, Math.floor((end - now) / 1000));
-                          }
-                          renderAdminGrid();
-                          renderLogTable();
-                      }
-                  }).subscribe();
-            } catch(err) {
-                console.error("Ralat Realtime Listener:", err);
-            }
-        }
+    } catch(err) {
+        console.error("Ralat Realtime Listener:", err);
+    }
+}
 
         function checkActiveSessionOnLoad() {
             const savedSession = localStorage.getItem('active_pc_session');
@@ -1452,8 +1491,6 @@
         }
 
         window.onload = async function() {
-            loadHistoryFromStorage();
-
             const savedView = localStorage.getItem('active_app_view');
             const urlParams = new URLSearchParams(window.location.search);
             const viewParam = urlParams.get('view');
@@ -1472,6 +1509,7 @@
 
             checkActiveSessionOnLoad();
             await fetchInitialSupabaseData();
+            await fetchLogsFromSupabase();
             await fetchInitialChatMessages();
             setupRealtimeListener();
             setupChatRealtimeListener();
