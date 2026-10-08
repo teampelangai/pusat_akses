@@ -116,11 +116,20 @@
         .buzz-animation {
             animation: buzzShake 0.15s infinite;
         }
+
+        /* AMARAN PEMASA KELIP-KELIP */
+        .timer-warning-critical {
+            animation: pulseRed 1s infinite alternate;
+        }
+        @keyframes pulseRed {
+            from { background-color: rgba(225, 29, 72, 0.2); border-color: #f43f5e; color: #fda4af; }
+            to { background-color: rgba(225, 29, 72, 0.8); border-color: #f43f5e; color: #ffffff; }
+        }
     </style>
 </head>
 <body id="appBody" class="min-h-screen flex flex-col antialiased relative">
 
-    <!-- MINI BAR PEMASA FLOATING -->
+    <!-- MINI BAR PEMASA FLOATING CLIENT -->
     <div id="clientMiniBarTimer" class="hidden fixed top-0 left-0 w-full bg-slate-900/95 border-b-2 border-indigo-500 backdrop-blur-md z-50 px-4 sm:px-8 py-2.5 shadow-2xl transition-all duration-300">
         <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
             <div class="flex items-center space-x-3">
@@ -134,15 +143,18 @@
                 </div>
             </div>
 
-            <div id="miniTimerBox" class="flex items-center gap-3 bg-slate-950 border border-slate-800 px-4 py-1.5 rounded-xl">
+            <div id="miniTimerBox" class="flex items-center gap-3 bg-slate-950 border border-slate-800 px-4 py-1.5 rounded-xl transition-all duration-300">
                 <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span id="timerPulseDot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                     Baki Masa:
                 </span>
                 <span id="miniTimerText" class="text-xl font-black font-mono text-indigo-400 tracking-wider">00:00</span>
             </div>
 
             <div class="flex items-center space-x-2">
+                <button type="button" onclick="requestExtraTime()" class="bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 border border-emerald-500/40 text-xs font-bold py-1.5 px-3 rounded-lg transition flex items-center gap-1">
+                    <i class="fa-solid fa-clock-rotate-left text-[11px]"></i> +15 Minit
+                </button>
                 <button type="button" onclick="sendBuzz('CLIENT')" class="bg-amber-500/30 hover:bg-amber-500/50 text-amber-200 border border-amber-500/40 text-xs font-black py-1.5 px-3 rounded-lg transition flex items-center gap-1">
                     🔔 BUZZ!
                 </button>
@@ -328,7 +340,7 @@
     <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full flex flex-col justify-center">
 
         <!-- VIEW 1: MOD PC CLIENT -->
-        <section id="view-client" class="w-full max-w-xl mx-auto transition-all duration-300">
+        <section id="view-client" class="w-full max-w-2xl mx-auto transition-all duration-300">
             <div id="clientFormCard" class="custom-card border rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
                 <div class="text-center mb-6">
                     <span class="bg-white/95 text-indigo-900 border border-slate-200 text-[10px] font-black px-3.5 py-1 rounded-full uppercase tracking-wider inline-block mb-2 shadow-sm">
@@ -411,14 +423,51 @@
                 </form>
             </div>
 
-            <div id="clientWorkspaceMessage" class="hidden text-center py-12 px-6 custom-card border rounded-3xl mt-12">
-                <div class="w-16 h-16 bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">
+            <!-- WORKSPACE CLIENT DENGAN PAUTAN PANTAAS PEMBELAJARAN -->
+            <div id="clientWorkspaceMessage" class="hidden text-center py-8 px-6 custom-card border rounded-3xl mt-8">
+                <div class="w-16 h-16 bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3">
                     <i class="fa-solid fa-window-maximize"></i>
                 </div>
-                <h3 class="text-xl font-bold mb-2">Sesi Penggunaan Sedang Aktif</h3>
-                <p class="text-xs opacity-70 max-w-md mx-auto">
-                    Baki masa penggunaan anda sentiasa dipaparkan pada **Mini Bar di bahagian atas skrin**. Anda boleh membuka tab baharu pelayar untuk melayari Portal DELIMa atau membuat kerja sekolah.
+                <h3 class="text-xl font-bold mb-1">Sesi Penggunaan Sedang Aktif</h3>
+                <p class="text-xs opacity-70 max-w-md mx-auto mb-6">
+                    Baki masa penggunaan anda sentiasa dipaparkan pada **Mini Bar di bahagian atas skrin**. Tekan pautan pantas di bawah untuk membuka aplikasi pembelajaran pilihan anda.
                 </p>
+
+                <!-- BAHAGIAN PAUTAN PANTAAS (QUICK LAUNCH) -->
+                <div class="border-t border-slate-700/50 pt-5 mt-2">
+                    <p class="text-xs font-extrabold uppercase tracking-wider text-indigo-400 mb-4 flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-rocket"></i> Pautan Pantas Pembelajaran
+                    </p>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <a href="https://delima.moe-dl.edu.my" target="_blank" rel="noopener noreferrer" class="custom-subcard border hover:border-indigo-500 p-3 rounded-2xl transition hover:scale-105 flex flex-col items-center gap-2 group">
+                            <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg font-black group-hover:bg-amber-500 group-hover:text-slate-950 transition">
+                                <i class="fa-solid fa-graduation-cap"></i>
+                            </div>
+                            <span class="text-xs font-bold">DELIMa KPM</span>
+                        </a>
+
+                        <a href="https://classroom.google.com" target="_blank" rel="noopener noreferrer" class="custom-subcard border hover:border-emerald-500 p-3 rounded-2xl transition hover:scale-105 flex flex-col items-center gap-2 group">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg font-black group-hover:bg-emerald-500 group-hover:text-slate-950 transition">
+                                <i class="fa-solid fa-chalkboard-user"></i>
+                            </div>
+                            <span class="text-xs font-bold">Classroom</span>
+                        </a>
+
+                        <a href="https://www.canva.com" target="_blank" rel="noopener noreferrer" class="custom-subcard border hover:border-sky-500 p-3 rounded-2xl transition hover:scale-105 flex flex-col items-center gap-2 group">
+                            <div class="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center text-lg font-black group-hover:bg-sky-500 group-hover:text-slate-950 transition">
+                                <i class="fa-solid fa-palette"></i>
+                            </div>
+                            <span class="text-xs font-bold">Canva</span>
+                        </a>
+
+                        <a href="https://kahoot.it" target="_blank" rel="noopener noreferrer" class="custom-subcard border hover:border-purple-500 p-3 rounded-2xl transition hover:scale-105 flex flex-col items-center gap-2 group">
+                            <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center text-lg font-black group-hover:bg-purple-500 group-hover:text-slate-950 transition">
+                                <i class="fa-solid fa-gamepad"></i>
+                            </div>
+                            <span class="text-xs font-bold">Kahoot!</span>
+                        </a>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -639,7 +688,6 @@
         };
 
         let currentTheme = 'dark';
-
         let pcSessions = {};
 
         function initPcSessions() {
@@ -689,6 +737,25 @@
             } catch(e) {}
         }
 
+        function playWarningChime() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.5);
+            } catch(e) {}
+        }
+
         function triggerBuzzEffect() {
             playBuzzAudio();
             const body = document.getElementById('appBody');
@@ -725,6 +792,63 @@
                     console.error("Gagal hantar Buzz:", err);
                 }
             }
+        }
+
+        async function requestExtraTime() {
+            if (!isChatEnabled) {
+                alert("Fungsi permintaan chat/masa dinyahaktifkan buat masa ini.");
+                return;
+            }
+            const studentName = pcSessions[currentClientPc]?.studentName || 'Murid';
+            const firstName = getFirstName(studentName);
+
+            if (db) {
+                try {
+                    await db.from('pc_messages').insert({
+                        sender_pc: currentClientPc,
+                        sender_name: firstName,
+                        recipient_pc: 'GURU',
+                        message: `⏳ Memohon Tambah Masa +15 Minit untuk ${currentClientPc}`
+                    });
+                    alert("Permohonan tambah masa 15 minit telah dihantar kepada Guru Pusat Akses!");
+                } catch(e) {}
+            }
+        }
+
+        async function addExtraMinutesAdmin(pcNo, extraMins = 10) {
+            if (!pcSessions[pcNo] || pcSessions[pcNo].status !== 'ACTIVE') {
+                alert("Hanya PC yang sedang AKTIF boleh ditambah masa.");
+                return;
+            }
+
+            let currentEnd = new Date(pcSessions[pcNo].endTime || Date.now());
+            let newEndTime = new Date(currentEnd.getTime() + extraMins * 60000);
+
+            pcSessions[pcNo].endTime = newEndTime;
+            pcSessions[pcNo].remainingSeconds += (extraMins * 60);
+
+            if (db) {
+                try {
+                    await db.from('pc_sessions').update({
+                        end_time: newEndTime.toISOString()
+                    }).eq('id', pcNo);
+                } catch(e) {}
+            }
+
+            if (currentClientPc === pcNo) {
+                const savedSession = localStorage.getItem('active_pc_session');
+                if (savedSession) {
+                    try {
+                        let parsed = JSON.parse(savedSession);
+                        parsed.endTime = newEndTime.toISOString();
+                        localStorage.setItem('active_pc_session', JSON.stringify(parsed));
+                    } catch(e){}
+                }
+                startClientTimer(pcNo, newEndTime);
+            }
+
+            renderAdminGrid();
+            alert(`Berjaya menambah ${extraMins} minit penggunaan untuk ${pcNo}!`);
         }
 
         function checkAdminAuthOnLoad() {
@@ -1472,6 +1596,9 @@
         function startClientTimer(pcNo, endTimeObj) {
             if(clientTimerInterval) clearInterval(clientTimerInterval);
 
+            const timerBox = document.getElementById('miniTimerBox');
+            const pulseDot = document.getElementById('timerPulseDot');
+
             clientTimerInterval = setInterval(async () => {
                 let now = new Date();
                 let diffSeconds = Math.max(0, Math.floor((new Date(endTimeObj) - now) / 1000));
@@ -1485,6 +1612,23 @@
                 let timeStr = (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
 
                 document.getElementById('miniTimerText').innerText = timeStr;
+
+                // VISUAL & AUDIO WARNING SYSTEM
+                if (diffSeconds <= 60 && diffSeconds > 0) {
+                    // Amaran Merah Berkelip (1 Minit Terakhir)
+                    timerBox?.classList.add('timer-warning-critical');
+                    if (pulseDot) pulseDot.className = "w-2 h-2 rounded-full bg-rose-500 animate-ping";
+                    if (diffSeconds % 10 === 0) playWarningChime();
+                } else if (diffSeconds <= 300 && diffSeconds > 60) {
+                    // Amaran Kuning (5 Minit Terakhir)
+                    timerBox?.classList.remove('timer-warning-critical');
+                    if (timerBox) timerBox.style.borderColor = "#f59e0b";
+                    if (pulseDot) pulseDot.className = "w-2 h-2 rounded-full bg-amber-400 animate-pulse";
+                } else {
+                    timerBox?.classList.remove('timer-warning-critical');
+                    if (timerBox) timerBox.style.borderColor = "#1e293b";
+                    if (pulseDot) pulseDot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
+                }
 
                 if(diffSeconds === 0) {
                     if(pcSessions[pcNo]) pcSessions[pcNo].status = 'EXPIRED';
@@ -1608,6 +1752,10 @@
                     infoHTML = '<div class="py-4 text-center text-xs opacity-50 font-medium">Sedia Digunakan</div>';
                 }
 
+               let extraActionBtn = pc.status === 'ACTIVE' 
+    ? '<button type="button" onclick="addExtraMinutesAdmin(\'' + pcNo + '\', 15)" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 text-xs font-bold py-1.5 px-2 rounded-lg transition shrink-0" title="Tambah 15 Minit">+15m</button>' 
+    : '';
+
                 let cardHTML = '<div class="rounded-2xl p-4 flex flex-col justify-between transition-all ' + cardColor + '">' +
                                 '<div>' +
                                     '<div class="flex items-center justify-between mb-3">' +
@@ -1620,6 +1768,7 @@
                                 '</div>' +
                                 '<div class="pt-2 border-t border-slate-700/50 flex items-center gap-1.5 mt-2">' +
                                     '<button type="button" onclick="stopAdminSession(\'' + pcNo + '\')" class="w-full custom-subcard hover:bg-slate-700/20 text-xs font-bold py-1.5 rounded-lg transition">Reset PC</button>' +
+                                    extraActionBtn +
                                 '</div>' +
                                '</div>';
 
@@ -1881,11 +2030,11 @@
                                 if(remaining > 0) {
                                     pcSessions[item.id].remainingSeconds = remaining;
                                     pcSessions[item.id].status = 'ACTIVE';
+                                    pcSessions[item.id].endTime = end;
                                 } else {
                                     pcSessions[item.id].remainingSeconds = 0;
                                     pcSessions[item.id].status = 'EXPIRED';
                                     
-                                    // Serta-merta kemaskini log dengan masa tamat tepat jika masih bertulis Sedang Aktif...
                                     const exactEndTimeStr = end.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
                                     recordActualEndTime(item.id, exactEndTimeStr);
                                 }
@@ -1953,6 +2102,11 @@
                               let end = new Date(item.end_time);
                               let remaining = Math.floor((end - now) / 1000);
                               pcSessions[item.id].remainingSeconds = Math.max(0, remaining);
+                              pcSessions[item.id].endTime = end;
+
+                              if (currentClientPc === item.id) {
+                                  startClientTimer(item.id, end);
+                              }
                           } else if (item.status === 'EXPIRED' && item.end_time) {
                               let end = new Date(item.end_time);
                               const exactEndTimeStr = end.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
