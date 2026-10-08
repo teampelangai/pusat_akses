@@ -6,6 +6,22 @@
     <title>e-PusatAkses - Sistem Log Digital & Pemasa Penggunaan PC</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        themeBg: 'var(--bg-main)',
+                        themeCard: 'var(--bg-card)',
+                        themeBorder: 'var(--border-color)',
+                        themeHeader: 'var(--bg-header)',
+                        themeText: 'var(--text-main)',
+                        themeMuted: 'var(--text-muted)'
+                    }
+                }
+            }
+        }
+    </script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts Inter -->
@@ -14,13 +30,61 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        :root {
+            /* TEMA LALAI: DARK MODE */
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --bg-subcard: #020617;
+            --bg-header: rgba(30, 41, 59, 0.9);
+            --border-color: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-primary: #4f46e5;
+        }
+
+        body.theme-corporate {
+            /* TEMA BIRU KOPRAT FORMAL - KONTRAST TEKS & KOTAK DIPERBAIKI */
+            --bg-main: #f0f4f8;
+            --bg-card: #ffffff;
+            --bg-subcard: #e2e8f0;
+            --bg-header: rgba(255, 255, 255, 0.95);
+            --border-color: #94a3b8;
+            --text-main: #0f172a;
+            --text-muted: #334155;
+            --accent-primary: #1e40af;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .custom-card {
+            background-color: var(--bg-card);
+            border-color: var(--border-color);
+            border-style: solid;
+        }
+
+        .custom-subcard {
+            background-color: var(--bg-subcard);
+            border-color: var(--border-color);
+            border-style: solid;
+        }
+
+        body.theme-corporate .custom-card,
+        body.theme-corporate .custom-subcard {
+            border-width: 1.5px;
+            box-shadow: 0 2px 4px 0 rgba(15, 23, 42, 0.06);
+        }
+
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.1); }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col antialiased relative">
+<body class="min-h-screen flex flex-col antialiased relative">
 
     <!-- MINI BAR PEMASA FLOATING -->
     <div id="clientMiniBarTimer" class="hidden fixed top-0 left-0 w-full bg-slate-900/95 border-b-2 border-indigo-500 backdrop-blur-md z-50 px-4 sm:px-8 py-2.5 shadow-2xl transition-all duration-300">
@@ -71,7 +135,7 @@
     </div>
 
     <!-- TETINGKAP CHAT CLIENT -->
-    <div id="clientChatDrawer" class="hidden fixed bottom-4 right-4 w-80 sm:w-96 bg-slate-900 border border-indigo-500/40 rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col h-[420px] transition-all">
+    <div id="clientChatDrawer" class="hidden fixed bottom-4 right-4 w-80 sm:w-96 custom-card border rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col h-[420px] transition-all">
         <div class="bg-indigo-600 px-4 py-3 flex items-center justify-between text-white">
             <div class="flex items-center gap-2">
                 <i class="fa-solid fa-comments"></i>
@@ -84,43 +148,88 @@
         <div id="clientChatMessageNotice" class="hidden bg-rose-950/80 border-b border-rose-800 text-rose-300 text-[10px] p-2 text-center font-bold">
             🔒 Sembang Dinyahaktifkan Oleh Guru
         </div>
-        <div id="clientChatMessages" class="flex-1 p-3 overflow-y-auto space-y-2 text-xs custom-scrollbar bg-slate-950/80">
+        <div id="clientChatMessages" class="flex-1 p-3 overflow-y-auto space-y-2 text-xs custom-scrollbar custom-subcard">
             <!-- MESEJ MURID HERE -->
         </div>
-        <form id="clientChatForm" onsubmit="sendClientMessage(event)" class="p-2 border-t border-slate-800 bg-slate-900 flex items-center gap-2">
-            <select id="clientChatRecipient" class="bg-slate-800 text-slate-300 text-[10px] border border-slate-700 rounded-lg p-1.5 outline-none">
+        <form id="clientChatForm" onsubmit="sendClientMessage(event)" class="p-2 border-t border-slate-700 custom-card flex items-center gap-2">
+            <select id="clientChatRecipient" class="custom-subcard border text-[10px] rounded-lg p-1.5 outline-none font-bold">
                 <option value="ALL">Semua (Awam)</option>
                 <option value="ADMIN">Guru / Admin</option>
             </select>
-            <input type="text" id="clientChatInput" maxlength="100" placeholder="Taip mesej..." required class="flex-1 bg-slate-950 text-slate-100 text-xs border border-slate-700 rounded-lg px-2.5 py-1.5 outline-none focus:border-indigo-500">
+            <input type="text" id="clientChatInput" maxlength="100" placeholder="Taip mesej..." required class="flex-1 custom-subcard border text-xs rounded-lg px-2.5 py-1.5 outline-none focus:border-indigo-500">
             <button type="submit" id="clientChatSendBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">
                 <i class="fa-solid fa-paper-plane"></i>
             </button>
         </form>
     </div>
 
+    <!-- MODAL TETAPAN PROFIL SEKOLAH (KHAS UNTUK ADMIN) -->
+    <div id="schoolConfigModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="custom-card border rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+                <h3 class="font-extrabold text-lg flex items-center gap-2">
+                    <i class="fa-solid fa-school text-indigo-500"></i> Tetapan Profil Sekolah
+                </h3>
+                <button type="button" onclick="closeSchoolConfigModal()" class="text-slate-400 hover:text-rose-400 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form onsubmit="saveSchoolConfig(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase mb-1">Nama Sekolah</label>
+                    <input type="text" id="inputSchoolName" required placeholder="Contoh: SK DATO' KLANA PETRA" class="w-full custom-subcard border text-xs font-bold rounded-xl p-3 outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase mb-1">Kod Sekolah</label>
+                    <input type="text" id="inputSchoolCode" required placeholder="Contoh: NBB4088" class="w-full custom-subcard border text-xs font-bold rounded-xl p-3 outline-none focus:border-indigo-500">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeSchoolConfigModal()" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-700 text-slate-300 hover:bg-slate-600">Batal</button>
+                    <button type="submit" class="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg">Simpan Ke Cloud</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- HEADER UTAMA -->
-    <header id="mainHeader" class="bg-slate-800/90 border-b border-slate-700 px-6 py-4 sticky top-0 z-30 backdrop-blur-md flex flex-wrap items-center justify-between gap-4 shadow-lg">
+    <header id="mainHeader" class="custom-card border-b px-6 py-4 sticky top-0 z-30 backdrop-blur-md flex flex-wrap items-center justify-between gap-4 shadow-lg">
         <div class="flex items-center space-x-3">
             <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-indigo-500/30">
                 <i class="fa-solid fa-desktop"></i>
             </div>
             <div>
-                <h1 class="font-extrabold text-lg tracking-wide text-white leading-tight">e-PusatAkses Sekolah</h1>
-                <p class="text-[11px] text-indigo-400 font-medium flex items-center gap-1.5">
+                <h1 class="font-extrabold text-lg tracking-wide leading-tight flex items-center gap-2">
+                    <span id="headerSchoolName">e-PusatAkses Sekolah</span>
+                    <span id="headerSchoolCodeBadge" class="bg-indigo-600/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 text-[10px] font-extrabold px-2 py-0.5 rounded-md">KOD</span>
+                </h1>
+                <p class="text-[11px] text-indigo-500 dark:text-indigo-400 font-medium flex items-center gap-1.5">
                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                     Sistem Log Penggunaan & Pemasa Digital
                 </p>
             </div>
         </div>
 
-        <div class="flex items-center bg-slate-950 p-1.5 rounded-xl border border-slate-700">
-            <button type="button" onclick="switchView('client')" id="btnViewClient" class="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 bg-indigo-600 text-white shadow-md">
-                <i class="fa-solid fa-display"></i> Mod PC Client (Murid)
+        <div class="flex flex-wrap items-center gap-3">
+            <!-- SUIS TEMA WARNA -->
+            <button type="button" onclick="toggleColorTheme()" class="px-3 py-2 rounded-xl text-xs font-bold transition-all border custom-card hover:opacity-90 flex items-center gap-1.5 shadow-sm">
+                <i class="fa-solid fa-palette text-indigo-500"></i>
+                <span id="themeToggleText">Tema: Dark Mode</span>
             </button>
-            <button type="button" onclick="switchView('admin')" id="btnViewAdmin" class="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 text-slate-400 hover:text-white">
-                <i class="fa-solid fa-chart-pie"></i> Dashboard Admin (Live)
+
+            <!-- BUTANG TETAPAN PROFIL SEKOLAH (DIPAPARKAN PADA ADMIN SAHAJA) -->
+            <button type="button" id="btnAdminSchoolConfig" onclick="openSchoolConfigModal()" class="hidden px-3 py-2 rounded-xl text-xs font-bold transition-all border border-indigo-500/30 bg-indigo-600/20 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-600/30 flex items-center gap-1.5">
+                <i class="fa-solid fa-gear"></i> Profil Sekolah
             </button>
+
+            <!-- NAVIGASI MOD -->
+            <div class="flex items-center custom-subcard p-1.5 rounded-xl border">
+                <button type="button" onclick="switchView('client')" id="btnViewClient" class="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 bg-indigo-600 text-white shadow-md">
+                    <i class="fa-solid fa-display"></i> Mod PC Client
+                </button>
+                <button type="button" onclick="switchView('admin')" id="btnViewAdmin" class="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 opacity-70 hover:opacity-100">
+                    <i class="fa-solid fa-chart-pie"></i> Dashboard Admin
+                </button>
+            </div>
         </div>
     </header>
 
@@ -129,57 +238,38 @@
 
         <!-- VIEW 1: MOD PC CLIENT (BORANG LOG MASUK) -->
         <section id="view-client" class="w-full max-w-xl mx-auto transition-all duration-300">
-            <div id="clientFormCard" class="bg-slate-800 border border-slate-700 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+            <div id="clientFormCard" class="custom-card border rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
                 <div class="text-center mb-6">
-                    <span class="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider inline-block mb-2">
+                    <span class="bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 border border-indigo-500/30 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider inline-block mb-2">
                         Sesi Pembelajaran Digital
                     </span>
-                    <h2 class="text-2xl font-black text-white tracking-tight">Daftar Penggunaan Komputer</h2>
-                    <p class="text-xs text-slate-400 mt-1">Isi maklumat anda sebelum memulakan sesi penggunaan PC Pusat Akses</p>
+                    <h2 class="text-2xl font-black tracking-tight">Daftar Penggunaan Komputer</h2>
+                    <p class="text-xs opacity-70 mt-1">Isi maklumat anda sebelum memulakan sesi penggunaan PC Pusat Akses</p>
                 </div>
 
                 <form id="studentLoginForm" onsubmit="handleStartSession(event)" class="space-y-4">
                     <div>
-                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Nombor Komputer (PC)</label>
+                        <label class="block text-xs font-bold uppercase mb-1.5">Nombor Komputer (PC)</label>
                         <div class="relative">
-                            <i class="fa-solid fa-laptop absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
-                            <select id="clientPcNo" class="w-full bg-slate-900 border border-slate-700 text-slate-100 font-bold text-sm rounded-xl pl-10 pr-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition">
-                                <option value="PC-01">PC-01</option>
-                                <option value="PC-02">PC-02</option>
-                                <option value="PC-03">PC-03</option>
-                                <option value="PC-04">PC-04</option>
-                                <option value="PC-05">PC-05</option>
-                                <option value="PC-06">PC-06</option>
-                                <option value="PC-07">PC-07</option>
-                                <option value="PC-08">PC-08</option>
-                                <option value="PC-09">PC-09</option>
-                                <option value="PC-10">PC-10</option>
-                                <option value="PC-11">PC-11</option>
-                                <option value="PC-12">PC-12</option>
-                                <option value="PC-13">PC-13</option>
-                                <option value="PC-14">PC-14</option>
-                                <option value="PC-15">PC-15</option>
-                                <option value="PC-16">PC-16</option>
-                                <option value="PC-17">PC-17</option>
-                                <option value="PC-18">PC-18</option>
-                                <option value="PC-19">PC-19</option>
-                                <option value="PC-20">PC-20</option>
+                            <i class="fa-solid fa-laptop absolute left-3.5 top-3.5 opacity-50 text-sm"></i>
+                            <select id="clientPcNo" class="w-full custom-subcard border font-bold text-sm rounded-xl pl-10 pr-4 py-3 outline-none focus:border-indigo-500 transition">
+                                <!-- DROPDOWN KOMPUTER DIJANAKAN DENGAN DINAMIK -->
                             </select>
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Nama Penuh Murid</label>
+                        <label class="block text-xs font-bold uppercase mb-1.5">Nama Penuh Murid</label>
                         <div class="relative">
-                            <i class="fa-regular fa-user absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
-                            <input type="text" id="clientStudentName" required placeholder="Contoh: Muhammad Ali Bin Hassan" class="w-full bg-slate-900 border border-slate-700 text-slate-100 font-semibold text-sm rounded-xl pl-10 pr-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition">
+                            <i class="fa-regular fa-user absolute left-3.5 top-3.5 opacity-50 text-sm"></i>
+                            <input type="text" id="clientStudentName" required placeholder="Contoh: Muhammad Ali Bin Hassan" class="w-full custom-subcard border font-semibold text-sm rounded-xl pl-10 pr-4 py-3 outline-none focus:border-indigo-500 transition">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Tahun / Tingkatan</label>
-                            <select id="clientStudentYear" required class="w-full bg-slate-900 border border-slate-700 text-slate-100 font-semibold text-sm rounded-xl p-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition">
+                            <label class="block text-xs font-bold uppercase mb-1.5">Tahun / Tingkatan</label>
+                            <select id="clientStudentYear" required class="w-full custom-subcard border font-semibold text-sm rounded-xl p-3 outline-none focus:border-indigo-500 transition">
                                 <option value="">-- Pilih Tahun --</option>
                                 <option value="Tahun 1">Tahun 1</option>
                                 <option value="Tahun 2">Tahun 2</option>
@@ -196,17 +286,17 @@
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Nama Kelas</label>
+                            <label class="block text-xs font-bold uppercase mb-1.5">Nama Kelas</label>
                             <div class="relative">
-                                <input type="text" id="clientClassName" required placeholder="Contoh: Cemerlang / Ibnu Sina" class="w-full bg-slate-900 border border-slate-700 text-slate-100 font-semibold text-sm rounded-xl p-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition">
+                                <input type="text" id="clientClassName" required placeholder="Contoh: Cemerlang / Ibnu Sina" class="w-full custom-subcard border font-semibold text-sm rounded-xl p-3 outline-none focus:border-indigo-500 transition">
                             </div>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Tempoh Masa Sesi</label>
-                            <select id="clientDuration" class="w-full bg-slate-900 border border-slate-700 text-indigo-400 font-extrabold text-sm rounded-xl p-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition">
+                            <label class="block text-xs font-bold uppercase mb-1.5">Tempoh Masa Sesi</label>
+                            <select id="clientDuration" class="w-full custom-subcard border text-indigo-500 dark:text-indigo-400 font-extrabold text-sm rounded-xl p-3 outline-none focus:border-indigo-500 transition">
                                 <option value="15">15 Minit</option>
                                 <option value="30" selected>30 Minit</option>
                                 <option value="45">45 Minit</option>
@@ -215,8 +305,8 @@
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Tujuan Penggunaan</label>
-                            <select id="clientPurpose" class="w-full bg-slate-900 border border-slate-700 text-slate-100 font-semibold text-sm rounded-xl p-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition">
+                            <label class="block text-xs font-bold uppercase mb-1.5">Tujuan Penggunaan</label>
+                            <select id="clientPurpose" class="w-full custom-subcard border font-semibold text-sm rounded-xl p-3 outline-none focus:border-indigo-500 transition">
                                 <option value="Carian Maklumat">Carian Maklumat / Internet</option>
                                 <option value="Portal DELIMa">Portal DELIMa</option>
                                 <option value="Kerja Sekolah / Tugasan">Kerja Sekolah / Tugasan</option>
@@ -231,12 +321,12 @@
                 </form>
             </div>
 
-            <div id="clientWorkspaceMessage" class="hidden text-center py-12 px-6 bg-slate-800/50 border border-slate-700/50 rounded-3xl mt-12">
-                <div class="w-16 h-16 bg-indigo-600/20 text-indigo-400 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">
+            <div id="clientWorkspaceMessage" class="hidden text-center py-12 px-6 custom-card border rounded-3xl mt-12">
+                <div class="w-16 h-16 bg-indigo-600/20 text-indigo-500 dark:text-indigo-400 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">
                     <i class="fa-solid fa-window-maximize"></i>
                 </div>
-                <h3 class="text-xl font-bold text-white mb-2">Sesi Penggunaan Sedang Aktif</h3>
-                <p class="text-xs text-slate-400 max-w-md mx-auto">
+                <h3 class="text-xl font-bold mb-2">Sesi Penggunaan Sedang Aktif</h3>
+                <p class="text-xs opacity-70 max-w-md mx-auto">
                     Baki masa penggunaan anda sentiasa dipaparkan pada **Mini Bar di bahagian atas skrin**. Anda boleh membuka tab baharu pelayar untuk melayari Portal DELIMa atau membuat kerja sekolah.
                 </p>
             </div>
@@ -247,53 +337,64 @@
 
             <!-- KOTAK STATISTIK -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-lg font-bold">
+                <div class="custom-card border p-4 rounded-2xl flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-lg font-bold">
                         <i class="fa-solid fa-check"></i>
                     </div>
                     <div>
-                        <p class="text-xs text-slate-400 font-medium">Kosong</p>
-                        <h4 id="statAvailable" class="text-xl font-black text-white">20</h4>
+                        <p class="text-xs opacity-70 font-medium">Kosong</p>
+                        <h4 id="statAvailable" class="text-xl font-black">20</h4>
                     </div>
                 </div>
-                <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-lg font-bold">
+                <div class="custom-card border p-4 rounded-2xl flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center text-lg font-bold">
                         <i class="fa-solid fa-desktop"></i>
                     </div>
                     <div>
-                        <p class="text-xs text-slate-400 font-medium">Aktif</p>
-                        <h4 id="statActive" class="text-xl font-black text-white">0</h4>
+                        <p class="text-xs opacity-70 font-medium">Aktif</p>
+                        <h4 id="statActive" class="text-xl font-black">0</h4>
                     </div>
                 </div>
-                <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center text-lg font-bold">
+                <div class="custom-card border p-4 rounded-2xl flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center text-lg font-bold">
                         <i class="fa-solid fa-clock-rotate-left"></i>
                     </div>
                     <div>
-                        <p class="text-xs text-slate-400 font-medium">Masa Tamat</p>
-                        <h4 id="statExpired" class="text-xl font-black text-white">0</h4>
+                        <p class="text-xs opacity-70 font-medium">Masa Tamat</p>
+                        <h4 id="statExpired" class="text-xl font-black">0</h4>
                     </div>
                 </div>
-                <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-lg font-bold">
+                <div class="custom-card border p-4 rounded-2xl flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center text-lg font-bold">
                         <i class="fa-solid fa-users"></i>
                     </div>
                     <div>
-                        <p class="text-xs text-slate-400 font-medium">Jumlah Hari Ini</p>
-                        <h4 id="statTotalToday" class="text-xl font-black text-white">0</h4>
+                        <p class="text-xs opacity-70 font-medium">Jumlah Hari Ini</p>
+                        <h4 id="statTotalToday" class="text-xl font-black">0</h4>
                     </div>
                 </div>
             </div>
 
-            <!-- SKRIN GRID 20 PC LIVE -->
+            <!-- SKRIN GRID PC LIVE TERMASUK DROPDOWN 10 PC / 20 PC -->
             <div>
-                <div class="flex flex-wrap items-center justify-between gap-4 bg-slate-800 border border-slate-700 p-4 rounded-2xl mb-4">
+                <div class="flex flex-wrap items-center justify-between gap-4 custom-card border p-4 rounded-2xl mb-4">
                     <div>
-                        <h2 class="text-lg font-black text-white">Status Live 20 PC Pusat Akses</h2>
-                        <p class="text-xs text-slate-400">Paparan pemantauan real-time status penggunaan komputer murid</p>
+                        <h2 id="liveStatusTitle" class="text-lg font-black">Status Live 20 PC Pusat Akses</h2>
+                        <p class="text-xs opacity-70"><span class="displaySchoolName">e-PusatAkses Sekolah</span> • <span class="displaySchoolCode">KOD</span></p>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <button type="button" onclick="resetAllSessions()" class="bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/30 font-bold text-xs py-2 px-3 rounded-lg transition flex items-center gap-2">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <!-- DROPDOWN PILIHAN JUMLAH PC -->
+                        <div class="flex items-center gap-2 custom-subcard border px-3 py-1.5 rounded-xl">
+                            <label for="selectPcCount" class="text-xs font-bold text-indigo-500 dark:text-indigo-400 flex items-center gap-1.5">
+                                <i class="fa-solid fa-sliders"></i> Bilangan PC:
+                            </label>
+                            <select id="selectPcCount" onchange="changePcCount(this.value)" class="custom-subcard font-extrabold text-xs rounded-lg px-2 py-1 outline-none border focus:border-indigo-500 cursor-pointer">
+                                <option value="10">10 PC</option>
+                                <option value="20" selected>20 PC</option>
+                            </select>
+                        </div>
+
+                        <button type="button" onclick="resetAllSessions()" class="bg-rose-600/20 hover:bg-rose-600/30 text-rose-500 dark:text-rose-400 border border-rose-500/30 font-bold text-xs py-2 px-3 rounded-xl transition flex items-center gap-2">
                             <i class="fa-solid fa-power-off"></i> Reset Semua PC
                         </button>
                     </div>
@@ -304,30 +405,30 @@
                 </div>
             </div>
 
-            <!-- PUSAT KAWALAN CHAT LIVE ADMIN -->
-            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl mt-8">
+            <!-- PUSAT KAWALAN CHAT LIVE ADMIN (KONTRAS WARNA TETAP DALAM DUA-DUA TEMA) -->
+            <div class="custom-card border rounded-2xl p-6 shadow-xl mt-8">
                 <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
                     <div>
-                        <h3 class="text-lg font-extrabold text-white flex items-center gap-2">
-                            <i class="fa-solid fa-comments text-indigo-400"></i> Live Chat Hub (Pusat Kawalan Mesej)
+                        <h3 class="text-lg font-extrabold flex items-center gap-2">
+                            <i class="fa-solid fa-comments text-indigo-500 dark:text-indigo-400"></i> Live Chat Hub (Pusat Kawalan Mesej)
                         </h3>
-                        <p class="text-xs text-slate-400 mt-0.5">Komunikasi Real-time Antara Murid & Guru Pusat Akses</p>
+                        <p class="text-xs opacity-70 mt-0.5">Komunikasi Real-time Antara Murid & Guru Pusat Akses</p>
                     </div>
                     <div class="flex items-center gap-3">
-                        <label class="flex items-center gap-2 text-xs text-slate-300 font-bold cursor-pointer">
+                        <label class="flex items-center gap-2 text-xs font-bold cursor-pointer">
                             <input type="checkbox" id="adminChatToggle" onchange="toggleAdminChatStatus()" checked class="w-4 h-4 accent-indigo-600">
-                            Status Chat: <span id="adminChatStatusText" class="text-emerald-400">Aktif</span>
+                            Status Chat: <span id="adminChatStatusText" class="text-emerald-500 font-extrabold">Aktif</span>
                         </label>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    <div class="lg:col-span-2 bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-col h-[320px]">
+                    <div class="lg:col-span-2 custom-subcard border rounded-xl p-4 flex flex-col h-[320px]">
                         <div id="adminChatMessages" class="flex-1 overflow-y-auto space-y-2 text-xs custom-scrollbar pr-2">
                             <!-- CHAT MESSAGES HERE -->
                         </div>
-                        <form id="adminChatForm" onsubmit="sendAdminMessage(event)" class="mt-3 pt-3 border-t border-slate-800 flex items-center gap-2">
-                            <select id="adminChatTarget" class="bg-slate-800 text-slate-200 text-xs border border-slate-700 rounded-lg p-2 outline-none">
+                        <form id="adminChatForm" onsubmit="sendAdminMessage(event)" class="mt-3 pt-3 border-t border-slate-700 flex items-center gap-2">
+                            <select id="adminChatTarget" class="custom-subcard text-xs border rounded-lg p-2 outline-none font-bold">
                                 <option value="ALL">📢 Broadcast (Semua PC)</option>
                                 <option value="PC-01">PC-01</option>
                                 <option value="PC-02">PC-02</option>
@@ -350,35 +451,36 @@
                                 <option value="PC-19">PC-19</option>
                                 <option value="PC-20">PC-20</option>
                             </select>
-                            <input type="text" id="adminChatInput" required placeholder="Taip Mesej Guru / Pengumuman..." class="flex-1 bg-slate-900 border border-slate-700 text-slate-100 text-xs rounded-lg px-3 py-2 outline-none focus:border-indigo-500">
+                            <input type="text" id="adminChatInput" required placeholder="Taip Mesej Guru / Pengumuman..." class="flex-1 custom-subcard border text-xs rounded-lg px-3 py-2 outline-none focus:border-indigo-500">
                             <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2 rounded-lg transition flex items-center gap-1.5">
                                 <i class="fa-solid fa-paper-plane"></i> Hantar
                             </button>
                         </form>
                     </div>
 
-                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-col justify-between">
+                    <!-- KOTAK PANDUAN GURU DENGAN TEKS JELAS SANGAT PADA BIRU KOPRAT & DARK MODE -->
+                    <div class="custom-subcard border rounded-xl p-4 flex flex-col justify-between">
                         <div>
-                            <h4 class="text-xs font-bold text-slate-300 uppercase mb-2">Panduan Guru & Kawalan</h4>
-                            <p class="text-[11px] text-slate-400 leading-relaxed mb-3">
+                            <h4 class="text-xs font-black uppercase mb-2 text-indigo-600 dark:text-indigo-400">Panduan Guru & Kawalan</h4>
+                            <p class="text-xs font-medium leading-relaxed mb-3 opacity-90">
                                 Gunakan fungsi chat ini untuk memberi arahan pantas, membantu murid yang mengalami masalah teknikal, atau mengumumkan baki masa pendaftaran.
                             </p>
                         </div>
-                        <button type="button" onclick="clearAllChatMessages()" class="w-full bg-slate-800 hover:bg-rose-950/50 hover:text-rose-300 border border-slate-700 text-slate-400 text-xs font-bold py-2 rounded-lg transition">
+                        <button type="button" onclick="clearAllChatMessages()" class="w-full custom-card hover:bg-rose-600/20 hover:text-rose-500 border border-slate-700 text-xs font-bold py-2 rounded-lg transition">
                             <i class="fa-solid fa-trash"></i> Padam Semua Rekod Chat
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- BAHAGIAN JADUAL LOG PENGGUNAAN KOMPUTER (UNTUK LAPORAN & CETAKAN) -->
-            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl mt-8">
+            <!-- BAHAGIAN JADUAL LOG PENGGUNAAN KOMPUTER -->
+            <div class="custom-card border rounded-2xl p-6 shadow-xl mt-8">
                 <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
                     <div>
-                        <h3 class="text-lg font-extrabold text-white flex items-center gap-2">
-                            <i class="fa-solid fa-file-invoice text-indigo-400"></i> Log Penggunaan Komputer Pusat Akses
+                        <h3 class="text-lg font-extrabold flex items-center gap-2">
+                            <i class="fa-solid fa-file-invoice text-indigo-500 dark:text-indigo-400"></i> Log Penggunaan Komputer Pusat Akses
                         </h3>
-                        <p class="text-xs text-slate-400 mt-0.5">Senarai rekod kehadiran dan sesi murid yang berdaftar (Awan Supabase Cloud)</p>
+                        <p class="text-xs opacity-70 mt-0.5">Senarai rekod kehadiran dan sesi murid yang berdaftar (Awan Supabase Cloud)</p>
                     </div>
                     
                     <!-- BUTANG EXPORT, IMPORT & CETAKAN LOG -->
@@ -400,7 +502,7 @@
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse text-xs">
                         <thead>
-                            <tr class="border-b border-slate-700 text-slate-300 font-bold uppercase bg-slate-900/50">
+                            <tr class="border-b border-slate-700 font-bold uppercase custom-subcard">
                                 <th class="p-3">Bil</th>
                                 <th class="p-3">Tarikh</th>
                                 <th class="p-3">No. PC</th>
@@ -411,9 +513,9 @@
                                 <th class="p-3">Masa Tamat</th>
                             </tr>
                         </thead>
-                        <tbody id="logTableBody" class="divide-y divide-slate-700/50 text-slate-200">
+                        <tbody id="logTableBody" class="divide-y divide-slate-700/50">
                             <tr>
-                                <td colspan="8" class="text-center p-6 text-slate-500">Tiada rekod log penggunaan buat masa ini.</td>
+                                <td colspan="8" class="text-center p-6 opacity-50">Tiada rekod log penggunaan buat masa ini.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -434,19 +536,33 @@
             db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         }
 
+        // TETAPAN PROFIL SEKOLAH & BILANGAN PC LALAI
+        let schoolConfig = {
+            name: "SK DATO' KLANA PETRA",
+            code: "NBB4088",
+            pcLimit: 20
+        };
+
+        let currentTheme = 'dark'; // 'dark' ATAU 'corporate'
+
         let pcSessions = {};
-        for(let i=1; i<=20; i++) {
-            let id = "PC-" + (i < 10 ? '0' + i : i);
-            pcSessions[id] = {
-                pcNo: id,
-                status: 'AVAILABLE',
-                studentName: '',
-                studentClass: '',
-                purpose: '',
-                duration: 30,
-                endTime: null,
-                remainingSeconds: 0
-            };
+
+        function initPcSessions() {
+            pcSessions = {};
+            const limit = schoolConfig.pcLimit || 20;
+            for(let i=1; i<=limit; i++) {
+                let id = "PC-" + (i < 10 ? '0' + i : i);
+                pcSessions[id] = {
+                    pcNo: id,
+                    status: 'AVAILABLE',
+                    studentName: '',
+                    studentClass: '',
+                    purpose: '',
+                    duration: 30,
+                    endTime: null,
+                    remainingSeconds: 0
+                };
+            }
         }
 
         let usageHistory = [];
@@ -455,6 +571,143 @@
         let currentClientPc = "PC-05";
         let clientTimerInterval = null;
         let toastTimeout = null;
+
+        // FUNGSI PENUKARAN BILANGAN PC (10 PC / 20 PC)
+        function changePcCount(newLimit) {
+            const limit = parseInt(newLimit, 10) || 20;
+            schoolConfig.pcLimit = limit;
+            
+            const titleEl = document.getElementById('liveStatusTitle');
+            if (titleEl) titleEl.innerText = `Status Live ${limit} PC Pusat Akses`;
+
+            renderClientPcDropdown();
+            initPcSessions();
+
+            localStorage.setItem('pusat_akses_school_config', JSON.stringify(schoolConfig));
+            
+            if (db) {
+                db.from('pc_sessions').upsert({
+                    id: 'GLOBAL_CONFIG',
+                    pc_no: 'GLOBAL_CONFIG',
+                    status: isChatEnabled ? 'ACTIVE' : 'MUTED',
+                    student_name: JSON.stringify(schoolConfig)
+                });
+            }
+
+            fetchInitialSupabaseData();
+            renderAdminGrid();
+        }
+
+        function renderClientPcDropdown() {
+            const selectEl = document.getElementById('clientPcNo');
+            if (!selectEl) return;
+
+            const limit = schoolConfig.pcLimit || 20;
+            let optionsHTML = '';
+            for(let i=1; i<=limit; i++) {
+                let id = "PC-" + (i < 10 ? '0' + i : i);
+                optionsHTML += `<option value="${id}">${id}</option>`;
+            }
+            selectEl.innerHTML = optionsHTML;
+        }
+
+        // FUNGSI TUKAR TEMA WARNA
+        function toggleColorTheme() {
+            if (currentTheme === 'dark') {
+                currentTheme = 'corporate';
+                document.body.classList.add('theme-corporate');
+                document.getElementById('themeToggleText').innerText = "Tema: Biru Koprat";
+            } else {
+                currentTheme = 'dark';
+                document.body.classList.remove('theme-corporate');
+                document.getElementById('themeToggleText').innerText = "Tema: Dark Mode";
+            }
+            localStorage.setItem('pusat_akses_theme', currentTheme);
+            renderAdminChat();
+            renderClientChat();
+        }
+
+        function loadSavedTheme() {
+            const savedTheme = localStorage.getItem('pusat_akses_theme');
+            if (savedTheme === 'corporate') {
+                currentTheme = 'corporate';
+                document.body.classList.add('theme-corporate');
+                const btnText = document.getElementById('themeToggleText');
+                if (btnText) btnText.innerText = "Tema: Biru Koprat";
+            }
+        }
+
+        // FUNGSI KELOLA TETAPAN PROFIL SEKOLAH DINAMIK
+        function updateSchoolUI() {
+            const hName = document.getElementById('headerSchoolName');
+            const hCode = document.getElementById('headerSchoolCodeBadge');
+            
+            if (hName) hName.innerText = schoolConfig.name || "e-PusatAkses Sekolah";
+            if (hCode) hCode.innerText = schoolConfig.code || "KOD";
+
+            document.querySelectorAll('.displaySchoolName').forEach(el => el.innerText = schoolConfig.name || "e-PusatAkses Sekolah");
+            document.querySelectorAll('.displaySchoolCode').forEach(el => el.innerText = schoolConfig.code || "KOD");
+
+            const limit = schoolConfig.pcLimit || 20;
+            const titleEl = document.getElementById('liveStatusTitle');
+            if (titleEl) titleEl.innerText = `Status Live ${limit} PC Pusat Akses`;
+
+            const selectPcCountEl = document.getElementById('selectPcCount');
+            if (selectPcCountEl) selectPcCountEl.value = limit.toString();
+
+            renderClientPcDropdown();
+        }
+
+        function openSchoolConfigModal() {
+            document.getElementById('inputSchoolName').value = schoolConfig.name;
+            document.getElementById('inputSchoolCode').value = schoolConfig.code;
+            document.getElementById('schoolConfigModal').classList.remove('hidden');
+        }
+
+        function closeSchoolConfigModal() {
+            document.getElementById('schoolConfigModal').classList.add('hidden');
+        }
+
+        async function saveSchoolConfig(e) {
+            if (e) e.preventDefault();
+            const name = document.getElementById('inputSchoolName').value.trim();
+            const code = document.getElementById('inputSchoolCode').value.trim();
+
+            if (!name || !code) return;
+
+            schoolConfig.name = name;
+            schoolConfig.code = code;
+
+            localStorage.setItem('pusat_akses_school_config', JSON.stringify(schoolConfig));
+            updateSchoolUI();
+
+            if (db) {
+                try {
+                    await db.from('pc_sessions').upsert({
+                        id: 'GLOBAL_CONFIG',
+                        pc_no: 'GLOBAL_CONFIG',
+                        status: isChatEnabled ? 'ACTIVE' : 'MUTED',
+                        student_name: JSON.stringify(schoolConfig)
+                    });
+                } catch(err) {
+                    console.error("Gagal simpan konfigurasi ke Supabase:", err);
+                }
+            }
+
+            closeSchoolConfigModal();
+            alert("Profil Sekolah berjaya disimpan dan diselaraskan ke Cloud!");
+        }
+
+        function loadLocalSchoolConfig() {
+            const saved = localStorage.getItem('pusat_akses_school_config');
+            if (saved) {
+                try {
+                    schoolConfig = Object.assign(schoolConfig, JSON.parse(saved));
+                } catch(e){}
+            }
+            initPcSessions();
+            updateSchoolUI();
+        }
 
         function loadHistoryFromStorage() {
             const savedLogs = localStorage.getItem('pusat_akses_history_logs');
@@ -469,7 +722,6 @@
             localStorage.setItem('pusat_akses_history_logs', JSON.stringify(usageHistory));
         }
 
-        // FUNGSI MEMUATKAN REKOD LOG DARIPADA SUPABASE CLOUD DENGAN FALLBACK LOCALSTORAGE
         async function fetchLogsFromSupabase() {
             loadHistoryFromStorage();
             renderLogTable();
@@ -496,7 +748,6 @@
             }
         }
 
-        // FUNGSI UNTUK SUSUN REKOD MENGIKUT NOMBOR PC MENAIK (PC-01 -> PC-20)
         function getSortedUsageHistory() {
             return [...usageHistory].sort((a, b) => {
                 let numA = parseInt(a.pcNo.replace('PC-', ''), 10) || 0;
@@ -508,7 +759,6 @@
             });
         }
 
-        // FUNGSI EXPORT LOG KE FAIL CSV
         function exportLogToCSV() {
             const sortedHistory = getSortedUsageHistory();
             if (sortedHistory.length === 0) {
@@ -517,6 +767,7 @@
             }
 
             let csvContent = "\uFEFF";
+            csvContent += `Sekolah: ${schoolConfig.name} (${schoolConfig.code})\n`;
             csvContent += "Bil,Tarikh,No PC,Nama Penuh Murid,Tahun / Kelas,Tujuan,Masa Mula,Masa Tamat\n";
 
             sortedHistory.forEach((item, index) => {
@@ -534,7 +785,7 @@
             const todayStr = new Date().toISOString().slice(0, 10);
             
             link.setAttribute("href", url);
-            link.setAttribute("download", `Log_PusatAkses_${todayStr}.csv`);
+            link.setAttribute("download", `Log_${schoolConfig.code}_${todayStr}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -544,7 +795,6 @@
             document.getElementById('csvFileInput').click();
         }
 
-        // FUNGSI IMPORT LOG DARI FAIL CSV TERUS KE SUPABASE & LOCALSTORAGE
         function importLogFromCSV(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -556,9 +806,9 @@
                 let countImported = 0;
                 let newEntries = [];
 
-                for (let i = 1; i < lines.length; i++) {
+                for (let i = 0; i < lines.length; i++) {
                     const line = lines[i].trim();
-                    if (!line) continue;
+                    if (!line || line.startsWith("Sekolah:")) continue;
 
                     const cols = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || line.split(',');
                     
@@ -604,7 +854,6 @@
             reader.readAsText(file);
         }
 
-        // FUNGSI MENGEMASKINI MASA TAMAT SEBENAR KE SUPABASE & LOCALSTORAGE (DENGAN FALLBACK)
         async function recordActualEndTime(pcNo) {
             const actualEndTimeStr = new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
             
@@ -637,17 +886,22 @@
             const adminSec = document.getElementById('view-admin');
             const btnClient = document.getElementById('btnViewClient');
             const btnAdmin = document.getElementById('btnViewAdmin');
+            const btnSchoolConfig = document.getElementById('btnAdminSchoolConfig');
 
             localStorage.setItem('active_app_view', mode);
 
             if(mode === 'client') {
                 clientSec.classList.remove('hidden');
                 adminSec.classList.add('hidden');
+                if (btnSchoolConfig) btnSchoolConfig.classList.add('hidden');
+
                 btnClient.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 bg-indigo-600 text-white shadow-md";
                 btnAdmin.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 text-slate-400 hover:text-white";
             } else {
                 clientSec.classList.add('hidden');
                 adminSec.classList.remove('hidden');
+                if (btnSchoolConfig) btnSchoolConfig.classList.remove('hidden');
+
                 btnClient.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 text-slate-400 hover:text-white";
                 btnAdmin.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 bg-indigo-600 text-white shadow-md";
                 renderAdminGrid();
@@ -660,14 +914,14 @@
             const toggle = document.getElementById('adminChatToggle');
             isChatEnabled = toggle ? toggle.checked : true;
             document.getElementById('adminChatStatusText').innerText = isChatEnabled ? "Aktif" : "Mute/Tutup";
-            document.getElementById('adminChatStatusText').className = isChatEnabled ? "text-emerald-400" : "text-rose-400";
+            document.getElementById('adminChatStatusText').className = isChatEnabled ? "text-emerald-500 font-extrabold" : "text-rose-500 font-extrabold";
 
             if (db) {
                 db.from('pc_sessions').upsert({
                     id: 'GLOBAL_CONFIG',
                     pc_no: 'GLOBAL_CONFIG',
                     status: isChatEnabled ? 'ACTIVE' : 'MUTED',
-                    student_name: 'CONFIG'
+                    student_name: JSON.stringify(schoolConfig)
                 });
             }
             updateClientChatAvailability();
@@ -796,17 +1050,17 @@
                 const isGuru = m.sender_pc === 'GURU';
 
                 let alignClass = isMe ? 'text-right' : 'text-left';
-                let bgClass = isMe ? 'bg-indigo-600 text-white rounded-br-none' : (isGuru ? 'bg-amber-600 text-white font-bold rounded-bl-none' : 'bg-slate-800 text-slate-200 rounded-bl-none');
+                let bgClass = isMe ? 'bg-indigo-600 text-white rounded-br-none' : (isGuru ? 'bg-amber-600 text-white font-bold rounded-bl-none' : 'custom-card border font-bold rounded-bl-none');
 
                 html += `<div class="${alignClass} mb-2">
-                    <span class="text-[9px] text-slate-400 block">${m.sender_pc === 'GURU' ? '📢 GURU' : '[' + m.sender_pc + '] ' + m.sender_name}</span>
+                    <span class="text-[9px] opacity-70 block">${m.sender_pc === 'GURU' ? '📢 GURU' : '[' + m.sender_pc + '] ' + m.sender_name}</span>
                     <div class="inline-block px-3 py-1.5 rounded-xl text-xs max-w-[85%] ${bgClass}">
                         ${m.message}
                     </div>
                 </div>`;
             });
 
-            container.innerHTML = html || '<div class="text-center text-slate-500 py-6">Tiada perbualan lagi.</div>';
+            container.innerHTML = html || '<div class="text-center opacity-50 py-6">Tiada perbualan lagi.</div>';
             container.scrollTop = container.scrollHeight;
         }
 
@@ -817,18 +1071,18 @@
             let html = '';
             allChatMessages.forEach(m => {
                 const isGuru = m.sender_pc === 'GURU';
-                let bgClass = isGuru ? 'bg-indigo-950 border border-indigo-700/50 text-indigo-200' : 'bg-slate-900 border border-slate-800 text-slate-200';
+                let bgClass = isGuru ? 'bg-indigo-600/20 border border-indigo-500/50' : 'custom-card border';
 
                 html += `<div class="p-2 rounded-lg ${bgClass} mb-1.5">
-                    <div class="flex items-center justify-between text-[10px] text-slate-400 mb-0.5 font-bold">
+                    <div class="flex items-center justify-between text-[10px] opacity-80 mb-0.5 font-bold">
                         <span>${isGuru ? '📢 GURU' : '[' + m.sender_pc + '] ' + m.sender_name} ➔ ${m.recipient_pc}</span>
                         <span>${new Date(m.created_at || Date.now()).toLocaleTimeString('ms-MY', {hour:'2-digit', minute:'2-digit'})}</span>
                     </div>
-                    <div class="text-xs font-medium">${m.message}</div>
+                    <div class="text-xs font-semibold">${m.message}</div>
                 </div>`;
             });
 
-            container.innerHTML = html || '<div class="text-center text-slate-500 py-6">Tiada mesej diterima.</div>';
+            container.innerHTML = html || '<div class="text-center opacity-50 py-6">Tiada mesej diterima.</div>';
             container.scrollTop = container.scrollHeight;
         }
 
@@ -885,124 +1139,115 @@
             } catch(e) {}
         }
 
-        // FUNGSI MULA SESI DENGAN REKOD LOG DUA HALA (SUPABASE & LOCALSTORAGE)
-       
+        async function handleStartSession(event) {
+            if (event) event.preventDefault();
 
-async function handleStartSession(event) {
-    if (event) event.preventDefault();
+            const pcNo = document.getElementById('clientPcNo')?.value.trim() || "PC-05";
+            currentClientPc = pcNo;
 
-    const pcNo = document.getElementById('clientPcNo')?.value.trim() || "PC-05";
-    currentClientPc = pcNo;
+            const name = document.getElementById('clientStudentName')?.value.trim() || "Murid";
+            const studentYear = document.getElementById('clientStudentYear')?.value.trim();
+            const classNameInput = document.getElementById('clientClassName')?.value.trim();
+            const durationInput = document.getElementById('clientDuration')?.value;
+            const duration = parseInt(durationInput, 10) || 30;
+            const purpose = document.getElementById('clientPurpose')?.value.trim() || "Carian";
 
-    const name = document.getElementById('clientStudentName')?.value.trim() || "Murid";
-    const studentYear = document.getElementById('clientStudentYear')?.value.trim();
-    const classNameInput = document.getElementById('clientClassName')?.value.trim();
-    const durationInput = document.getElementById('clientDuration')?.value;
-    const duration = parseInt(durationInput, 10) || 30;
-    const purpose = document.getElementById('clientPurpose')?.value.trim() || "Carian";
-
-    if (!studentYear || !classNameInput) {
-        alert("Sila lengkapkan pilihan Tahun/Tingkatan dan Nama Kelas!");
-        return false;
-    }
-
-    const fullClassDetails = studentYear + " " + classNameInput;
-    const now = new Date();
-    const endTime = new Date(now.getTime() + duration * 60000);
-
-    const todayDate = now.toLocaleDateString('ms-MY', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    const startTimeStr = now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
-
-    window.onbeforeunload = function(e) {
-        const message = "Adakah anda pasti untuk meninggalkan halaman ini?";
-        e = e || window.event;
-        if (e) e.returnValue = message;
-        return message;
-    };
-
-    pcSessions[pcNo] = {
-        pcNo: pcNo,
-        status: 'ACTIVE',
-        studentName: name,
-        studentClass: fullClassDetails,
-        purpose: purpose,
-        duration: duration,
-        endTime: endTime,
-        remainingSeconds: duration * 60
-    };
-
-    // Objek Log Baharu
-    const newLogItem = {
-        date: todayDate,
-        pcNo: pcNo,
-        studentName: name,
-        studentClass: fullClassDetails,
-        purpose: purpose,
-        startTime: startTimeStr,
-        endTime: 'Sedang Aktif...',
-        dbId: null
-    };
-
-    // 1. TAMPILKAN LOG KE SKRIN DENGAN SERTA-MERTA
-    usageHistory.unshift(newLogItem);
-    saveHistoryToStorage();
-    renderLogTable();
-
-    // 2. HANTAR KE SUPABASE
-    if (db) {
-        try {
-            const { data, error } = await db.from('usage_logs').insert({
-                date: todayDate,
-                pc_no: pcNo,
-                student_name: name,
-                student_class: fullClassDetails,
-                purpose: purpose,
-                start_time: startTimeStr,
-                end_time: 'Sedang Aktif...'
-            }).select();
-
-            if (error) {
-                console.error("Ralat Insert Supabase:", error);
-                alert("Amaran RLS Supabase: Data log tidak dapat disimpan ke Supabase Cloud. Sila matikan RLS pada jadual usage_logs di Supabase!");
-            } else if (data && data.length > 0) {
-                usageHistory[0].dbId = data[0].id;
-                saveHistoryToStorage();
+            if (!studentYear || !classNameInput) {
+                alert("Sila lengkapkan pilihan Tahun/Tingkatan dan Nama Kelas!");
+                return false;
             }
-        } catch(e) {
-            console.error("Gagal simpan usage_logs di Supabase:", e);
-        }
 
-        try {
-            await db.from('pc_sessions').upsert({
-                id: pcNo,
-                pc_no: pcNo,
+            const fullClassDetails = studentYear + " " + classNameInput;
+            const now = new Date();
+            const endTime = new Date(now.getTime() + duration * 60000);
+
+            const todayDate = now.toLocaleDateString('ms-MY', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const startTimeStr = now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+            window.onbeforeunload = function(e) {
+                const message = "Adakah anda pasti untuk meninggalkan halaman ini?";
+                e = e || window.event;
+                if (e) e.returnValue = message;
+                return message;
+            };
+
+            pcSessions[pcNo] = {
+                pcNo: pcNo,
                 status: 'ACTIVE',
-                student_name: name,
-                student_class: fullClassDetails,
+                studentName: name,
+                studentClass: fullClassDetails,
                 purpose: purpose,
                 duration: duration,
-                end_time: endTime.toISOString(),
-                updated_at: new Date().toISOString()
-            });
-        } catch(e) {}
-    }
+                endTime: endTime,
+                remainingSeconds: duration * 60
+            };
 
-    localStorage.setItem('active_pc_session', JSON.stringify({
-        pcNo, studentName: name, studentClass: fullClassDetails, purpose, duration, endTime, startTimeStr
-    }));
+            const newLogItem = {
+                date: todayDate,
+                pcNo: pcNo,
+                studentName: name,
+                studentClass: fullClassDetails,
+                purpose: purpose,
+                startTime: startTimeStr,
+                endTime: 'Sedang Aktif...',
+                dbId: null
+            };
 
-    document.getElementById('clientFormCard').classList.add('hidden');
-    document.getElementById('mainHeader').classList.add('hidden');
-    document.getElementById('clientMiniBarTimer').classList.remove('hidden');
-    document.getElementById('clientWorkspaceMessage').classList.remove('hidden');
+            usageHistory.unshift(newLogItem);
+            saveHistoryToStorage();
+            renderLogTable();
 
-    document.getElementById('miniActivePcNo').innerText = pcNo;
-    document.getElementById('miniActiveStudentName').innerText = name;
-    document.getElementById('miniActiveStudentDetails').innerText = fullClassDetails + ' • ' + purpose;
+            if (db) {
+                try {
+                    const { data, error } = await db.from('usage_logs').insert({
+                        date: todayDate,
+                        pc_no: pcNo,
+                        student_name: name,
+                        student_class: fullClassDetails,
+                        purpose: purpose,
+                        start_time: startTimeStr,
+                        end_time: 'Sedang Aktif...'
+                    }).select();
 
-    startClientTimer(pcNo, endTime);
-    return false;
-}
+                    if (data && data.length > 0) {
+                        usageHistory[0].dbId = data[0].id;
+                        saveHistoryToStorage();
+                    }
+                } catch(e) {
+                    console.error("Gagal simpan usage_logs di Supabase:", e);
+                }
+
+                try {
+                    await db.from('pc_sessions').upsert({
+                        id: pcNo,
+                        pc_no: pcNo,
+                        status: 'ACTIVE',
+                        student_name: name,
+                        student_class: fullClassDetails,
+                        purpose: purpose,
+                        duration: duration,
+                        end_time: endTime.toISOString(),
+                        updated_at: new Date().toISOString()
+                    });
+                } catch(e) {}
+            }
+
+            localStorage.setItem('active_pc_session', JSON.stringify({
+                pcNo, studentName: name, studentClass: fullClassDetails, purpose, duration, endTime, startTimeStr
+            }));
+
+            document.getElementById('clientFormCard').classList.add('hidden');
+            document.getElementById('mainHeader').classList.add('hidden');
+            document.getElementById('clientMiniBarTimer').classList.remove('hidden');
+            document.getElementById('clientWorkspaceMessage').classList.remove('hidden');
+
+            document.getElementById('miniActivePcNo').innerText = pcNo;
+            document.getElementById('miniActiveStudentName').innerText = name;
+            document.getElementById('miniActiveStudentDetails').innerText = fullClassDetails + ' • ' + purpose;
+
+            startClientTimer(pcNo, endTime);
+            return false;
+        }
 
         function startClientTimer(pcNo, endTimeObj) {
             if(clientTimerInterval) clearInterval(clientTimerInterval);
@@ -1107,19 +1352,19 @@ async function handleStartSession(event) {
             Object.keys(pcSessions).forEach(pcNo => {
                 let pc = pcSessions[pcNo];
                 
-                let cardColor = "border-slate-700 bg-slate-800";
-                let badge = '<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">KOSONG</span>';
+                let cardColor = "custom-card border";
+                let badge = '<span class="bg-emerald-500/10 text-emerald-500 border border-emerald-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">KOSONG</span>';
                 
                 if(pc.status === 'AVAILABLE') availCount++;
                 if(pc.status === 'ACTIVE') {
                     activeCount++;
-                    cardColor = "border-indigo-500/50 bg-slate-800/90 ring-1 ring-indigo-500/30";
-                    badge = '<span class="bg-blue-500/20 text-blue-300 border border-blue-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">AKTIF</span>';
+                    cardColor = "border-indigo-500/50 custom-card ring-1 ring-indigo-500/30";
+                    badge = '<span class="bg-blue-500/20 text-blue-500 border border-blue-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">AKTIF</span>';
                 }
                 if(pc.status === 'EXPIRED') {
                     expiredCount++;
                     cardColor = "border-rose-500 bg-rose-950/30 ring-2 ring-rose-500 animate-pulse";
-                    badge = '<span class="bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full">MASA TAMAT</span>';
+                    badge = '<span class="bg-rose-500/20 text-rose-500 border border-rose-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full">MASA TAMAT</span>';
                 }
 
                 let mins = Math.floor((pc.remainingSeconds || 0) / 60);
@@ -1129,26 +1374,26 @@ async function handleStartSession(event) {
                 let infoHTML = '';
                 if(pc.status === 'ACTIVE' || pc.status === 'EXPIRED') {
                     infoHTML = '<div class="space-y-1 mb-3">' +
-                                '<h5 class="text-xs font-bold text-white truncate">' + (pc.studentName || 'Murid') + '</h5>' +
-                                '<p class="text-[11px] text-slate-400 font-medium">' + (pc.studentClass || '-') + ' • ' + (pc.purpose || '-') + '</p>' +
-                                '<div class="text-lg font-black font-mono text-indigo-400 mt-2">' + timerText + '</div>' +
+                                '<h5 class="text-xs font-bold truncate">' + (pc.studentName || 'Murid') + '</h5>' +
+                                '<p class="text-[11px] opacity-70 font-medium">' + (pc.studentClass || '-') + ' • ' + (pc.purpose || '-') + '</p>' +
+                                '<div class="text-lg font-black font-mono text-indigo-500 dark:text-indigo-400 mt-2">' + timerText + '</div>' +
                                '</div>';
                 } else {
-                    infoHTML = '<div class="py-4 text-center text-xs text-slate-500 font-medium">Sedia Digunakan</div>';
+                    infoHTML = '<div class="py-4 text-center text-xs opacity-50 font-medium">Sedia Digunakan</div>';
                 }
 
-                let cardHTML = '<div class="border rounded-2xl p-4 flex flex-col justify-between transition-all ' + cardColor + '">' +
+                let cardHTML = '<div class="rounded-2xl p-4 flex flex-col justify-between transition-all ' + cardColor + '">' +
                                 '<div>' +
                                     '<div class="flex items-center justify-between mb-3">' +
-                                        '<span class="font-extrabold text-sm text-white flex items-center gap-2">' +
-                                            '<i class="fa-solid fa-desktop text-slate-400"></i> ' + pc.pcNo +
+                                        '<span class="font-extrabold text-sm flex items-center gap-2">' +
+                                            '<i class="fa-solid fa-desktop opacity-50"></i> ' + pc.pcNo +
                                         '</span>' +
                                         badge +
                                     '</div>' +
                                     infoHTML +
                                 '</div>' +
                                 '<div class="pt-2 border-t border-slate-700/50 flex items-center gap-1.5 mt-2">' +
-                                    '<button type="button" onclick="stopAdminSession(\'' + pc.pcNo + '\')" class="w-full bg-slate-700/50 hover:bg-slate-700 text-slate-300 text-[10px] font-bold py-1.5 rounded-lg transition">Reset PC</button>' +
+                                    '<button type="button" onclick="stopAdminSession(\'' + pc.pcNo + '\')" class="w-full custom-subcard hover:bg-slate-700/20 text-xs font-bold py-1.5 rounded-lg transition">Reset PC</button>' +
                                 '</div>' +
                                '</div>';
 
@@ -1171,23 +1416,23 @@ async function handleStartSession(event) {
             sortedHistory.forEach((item, index) => {
                 let endTimeBadge = item.endTime;
                 if (!item.endTime || item.endTime.includes('Aktif')) {
-                    endTimeBadge = `<span class="bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded-full font-bold animate-pulse">Sedang Aktif...</span>`;
+                    endTimeBadge = `<span class="bg-blue-500/20 text-blue-500 border border-blue-500/30 px-2 py-0.5 rounded-full font-bold animate-pulse">Sedang Aktif...</span>`;
                 }
 
-                rowsHTML += `<tr class="hover:bg-slate-700/30">
+                rowsHTML += `<tr class="hover:bg-slate-700/10">
                     <td class="p-3 font-semibold">${index + 1}</td>
                     <td class="p-3">${item.date}</td>
-                    <td class="p-3 font-bold text-indigo-400">${item.pcNo}</td>
+                    <td class="p-3 font-bold text-indigo-500 dark:text-indigo-400">${item.pcNo}</td>
                     <td class="p-3 font-bold">${item.studentName}</td>
                     <td class="p-3">${item.studentClass || '-'}</td>
                     <td class="p-3">${item.purpose || '-'}</td>
-                    <td class="p-3 text-emerald-400 font-semibold">${item.startTime || '-'}</td>
-                    <td class="p-3 text-rose-400 font-semibold">${endTimeBadge}</td>
+                    <td class="p-3 text-emerald-500 font-semibold">${item.startTime || '-'}</td>
+                    <td class="p-3 text-rose-500 font-semibold">${endTimeBadge}</td>
                 </tr>`;
             });
 
             if(sortedHistory.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="8" class="text-center p-6 text-slate-500">Tiada rekod log penggunaan buat masa ini.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="8" class="text-center p-6 opacity-50">Tiada rekod log penggunaan buat masa ini.</td></tr>';
             } else {
                 tableBody.innerHTML = rowsHTML;
             }
@@ -1224,12 +1469,13 @@ async function handleStartSession(event) {
                 <html lang="ms">
                 <head>
                     <meta charset="UTF-8">
-                    <title>Rekod Log Penggunaan Pusat Akses Sekolah</title>
+                    <title>Rekod Log Penggunaan Pusat Akses - ${schoolConfig.name}</title>
                     <style>
                         @page { size: A4 landscape; margin: 15mm; }
                         body { font-family: 'Arial', sans-serif; font-size: 10pt; color: #000; margin: 0; padding: 10px; }
                         .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
-                        .header h2 { margin: 0; font-size: 15pt; text-transform: uppercase; }
+                        .header h2 { margin: 0; font-size: 16pt; text-transform: uppercase; }
+                        .header h3 { margin: 3px 0; font-size: 12pt; color: #1e40af; text-transform: uppercase; }
                         .header p { margin: 5px 0 0 0; font-size: 9pt; color: #333; }
                         .meta-info { margin-bottom: 15px; display: flex; justify-content: space-between; font-size: 9pt; font-weight: bold; }
                         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
@@ -1242,7 +1488,8 @@ async function handleStartSession(event) {
                 </head>
                 <body>
                     <div class="header">
-                        <h2>REKOD LOG PENGGUNAAN KOMPUTER PUSAT AKSES SEKOLAH</h2>
+                        <h2>${schoolConfig.name} (${schoolConfig.code})</h2>
+                        <h3>REKOD LOG PENGGUNAAN KOMPUTER PUSAT AKSES</h3>
                         <p>Laporan Rasmi Kehadiran & Sesi Penggunaan Komputer Digital Murid</p>
                     </div>
 
@@ -1331,8 +1578,9 @@ async function handleStartSession(event) {
         }
 
         async function resetAllSessions() {
-            if(confirm("Adakah anda pasti untuk reset status SEMUA 20 Komputer?")) {
-                for(let i=1; i<=20; i++) {
+            const limit = schoolConfig.pcLimit || 20;
+            if(confirm(`Adakah anda pasti untuk reset status SEMUA ${limit} Komputer?`)) {
+                for(let i=1; i<=limit; i++) {
                     let id = "PC-" + (i < 10 ? '0' + i : i);
                     await recordActualEndTime(id);
 
@@ -1349,11 +1597,13 @@ async function handleStartSession(event) {
                             });
                         } catch(e){}
                     }
-                    pcSessions[id].status = 'AVAILABLE';
-                    pcSessions[id].studentName = '';
-                    pcSessions[id].studentClass = '';
-                    pcSessions[id].purpose = '';
-                    pcSessions[id].remainingSeconds = 0;
+                    if (pcSessions[id]) {
+                        pcSessions[id].status = 'AVAILABLE';
+                        pcSessions[id].studentName = '';
+                        pcSessions[id].studentClass = '';
+                        pcSessions[id].purpose = '';
+                        pcSessions[id].remainingSeconds = 0;
+                    }
                 }
                 resetClientScreenLocally();
                 renderAdminGrid();
@@ -1372,8 +1622,17 @@ async function handleStartSession(event) {
                             const toggle = document.getElementById('adminChatToggle');
                             if (toggle) toggle.checked = isChatEnabled;
                             document.getElementById('adminChatStatusText').innerText = isChatEnabled ? "Aktif" : "Mute/Tutup";
-                            document.getElementById('adminChatStatusText').className = isChatEnabled ? "text-emerald-400" : "text-rose-400";
+                            document.getElementById('adminChatStatusText').className = isChatEnabled ? "text-emerald-500 font-extrabold" : "text-rose-500 font-extrabold";
                             updateClientChatAvailability();
+
+                            if (item.student_name && item.student_name.startsWith('{')) {
+                                try {
+                                    schoolConfig = Object.assign(schoolConfig, JSON.parse(item.student_name));
+                                    localStorage.setItem('pusat_akses_school_config', JSON.stringify(schoolConfig));
+                                    initPcSessions();
+                                    updateSchoolUI();
+                                } catch(e){}
+                            }
                             return;
                         }
 
@@ -1408,61 +1667,66 @@ async function handleStartSession(event) {
             }
         }
 
-        // REALTIME LISTENER SUPABASE
-       
-	function setupRealtimeListener() {
-    if(!db) return;
-    try {
-        // 1. LISTENER STATUS PC
-        db.channel('pc_sessions_channel')
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'pc_sessions' }, payload => {
-              const item = payload.new;
-              if (!item) return;
+        function setupRealtimeListener() {
+            if(!db) return;
+            try {
+                db.channel('pc_sessions_channel')
+                  .on('postgres_changes', { event: '*', schema: 'public', table: 'pc_sessions' }, payload => {
+                      const item = payload.new;
+                      if (!item) return;
 
-              if (item.id === 'GLOBAL_CONFIG') {
-                  isChatEnabled = item.status !== 'MUTED';
-                  const toggle = document.getElementById('adminChatToggle');
-                  if (toggle) toggle.checked = isChatEnabled;
-                  document.getElementById('adminChatStatusText').innerText = isChatEnabled ? "Aktif" : "Mute/Tutup";
-                  document.getElementById('adminChatStatusText').className = isChatEnabled ? "text-emerald-400" : "text-rose-400";
-                  updateClientChatAvailability();
-                  return;
-              }
+                      if (item.id === 'GLOBAL_CONFIG') {
+                          isChatEnabled = item.status !== 'MUTED';
+                          const toggle = document.getElementById('adminChatToggle');
+                          if (toggle) toggle.checked = isChatEnabled;
+                          document.getElementById('adminChatStatusText').innerText = isChatEnabled ? "Aktif" : "Mute/Tutup";
+                          document.getElementById('adminChatStatusText').className = isChatEnabled ? "text-emerald-500 font-extrabold" : "text-rose-500 font-extrabold";
+                          updateClientChatAvailability();
 
-              if(pcSessions[item.id]) {
-                  pcSessions[item.id].status = item.status;
-                  pcSessions[item.id].studentName = item.student_name || '';
-                  pcSessions[item.id].studentClass = item.student_class || '';
-                  pcSessions[item.id].purpose = item.purpose || '';
-                  pcSessions[item.id].duration = item.duration || 30;
-
-                  if (item.status === 'AVAILABLE') {
-                      pcSessions[item.id].remainingSeconds = 0;
-                      pcSessions[item.id].studentName = '';
-                      if (currentClientPc === item.id) {
-                          resetClientScreenLocally();
+                          if (item.student_name && item.student_name.startsWith('{')) {
+                              try {
+                                  schoolConfig = Object.assign(schoolConfig, JSON.parse(item.student_name));
+                                  localStorage.setItem('pusat_akses_school_config', JSON.stringify(schoolConfig));
+                                  initPcSessions();
+                                  updateSchoolUI();
+                              } catch(e){}
+                          }
+                          return;
                       }
-                  }
-                  
-                  if(item.end_time && item.status === 'ACTIVE') {
-                      let now = new Date();
-                      let end = new Date(item.end_time);
-                      pcSessions[item.id].remainingSeconds = Math.max(0, Math.floor((end - now) / 1000));
-                  }
-                  renderAdminGrid();
-              }
-          }).subscribe();
 
-        // 2. LISTENER REALTIME UNTUK JADUAL LOG
-        db.channel('usage_logs_channel')
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'usage_logs' }, () => {
-              fetchLogsFromSupabase();
-          }).subscribe();
+                      if(pcSessions[item.id]) {
+                          pcSessions[item.id].status = item.status;
+                          pcSessions[item.id].studentName = item.student_name || '';
+                          pcSessions[item.id].studentClass = item.student_class || '';
+                          pcSessions[item.id].purpose = item.purpose || '';
+                          pcSessions[item.id].duration = item.duration || 30;
 
-    } catch(err) {
-        console.error("Ralat Realtime Listener:", err);
-    }
-}
+                          if (item.status === 'AVAILABLE') {
+                              pcSessions[item.id].remainingSeconds = 0;
+                              pcSessions[item.id].studentName = '';
+                              if (currentClientPc === item.id) {
+                                  resetClientScreenLocally();
+                              }
+                          }
+                          
+                          if(item.end_time && item.status === 'ACTIVE') {
+                              let now = new Date();
+                              let end = new Date(item.end_time);
+                              pcSessions[item.id].remainingSeconds = Math.max(0, Math.floor((end - now) / 1000));
+                          }
+                          renderAdminGrid();
+                      }
+                  }).subscribe();
+
+                db.channel('usage_logs_channel')
+                  .on('postgres_changes', { event: '*', schema: 'public', table: 'usage_logs' }, () => {
+                      fetchLogsFromSupabase();
+                  }).subscribe();
+
+            } catch(err) {
+                console.error("Ralat Realtime Listener:", err);
+            }
+        }
 
         function checkActiveSessionOnLoad() {
             const savedSession = localStorage.getItem('active_pc_session');
@@ -1491,12 +1755,17 @@ async function handleStartSession(event) {
         }
 
         window.onload = async function() {
+            loadSavedTheme();
+            loadLocalSchoolConfig();
+
             const savedView = localStorage.getItem('active_app_view');
             const urlParams = new URLSearchParams(window.location.search);
             const viewParam = urlParams.get('view');
 
             if (viewParam === 'admin' || savedView === 'admin') {
                 switchView('admin');
+            } else {
+                switchView('client');
             }
 
             const autoPc = urlParams.get('pc');
