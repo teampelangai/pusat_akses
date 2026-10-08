@@ -279,7 +279,7 @@
         </div>
     </div>
 
-    <!-- HEADER UTAMA (LENCANA LATAR PUTIH UNTUK KOD & SUBTAJUK DIKEMASKINI) -->
+    <!-- HEADER UTAMA -->
     <header id="mainHeader" class="custom-card border-b px-6 py-4 sticky top-0 z-30 backdrop-blur-md flex flex-wrap items-center justify-between gap-4 shadow-lg">
         <div class="flex items-center space-x-3">
             <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-indigo-500/30">
@@ -773,7 +773,7 @@
             }
         }
 
-        function changePcCount(newLimit) {
+        async function changePcCount(newLimit) {
             const limit = parseInt(newLimit, 10) || 20;
             schoolConfig.pcLimit = limit;
             
@@ -786,15 +786,16 @@
             localStorage.setItem('pusat_akses_school_config', JSON.stringify(schoolConfig));
             
             if (db) {
-                db.from('pc_sessions').upsert({
+                await db.from('pc_sessions').upsert({
                     id: 'GLOBAL_CONFIG',
                     pc_no: 'GLOBAL_CONFIG',
                     status: isChatEnabled ? 'ACTIVE' : 'MUTED',
                     student_name: JSON.stringify(schoolConfig)
                 });
+
+                await fetchInitialSupabaseData();
             }
 
-            fetchInitialSupabaseData();
             renderAdminGrid();
         }
 
@@ -1102,6 +1103,9 @@
 
                 btnClient.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 bg-indigo-600 text-white shadow-md";
                 btnAdmin.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 text-slate-400 hover:text-white";
+                
+                // Semak semula jika ada sesi aktif untuk terus kekalkan Mini Bar
+                checkActiveSessionOnLoad();
             } else {
                 clientSec.classList.add('hidden');
                 adminSec.classList.remove('hidden');
@@ -1443,7 +1447,13 @@
             }
 
             localStorage.setItem('active_pc_session', JSON.stringify({
-                pcNo, studentName: name, studentClass: fullClassDetails, purpose, duration, endTime, startTimeStr
+                pcNo, 
+                studentName: name, 
+                studentClass: fullClassDetails, 
+                purpose, 
+                duration, 
+                endTime: endTime.toISOString(), 
+                startTimeStr
             }));
 
             document.getElementById('clientFormCard').classList.add('hidden');
@@ -1827,7 +1837,7 @@
             if(!db) return;
             try {
                 const { data, error } = await db.from('pc_sessions').select('*');
-                if(data) {
+                if(data && data.length > 0) {
                     data.forEach(item => {
                         if (item.id === 'GLOBAL_CONFIG') {
                             isChatEnabled = item.status !== 'MUTED';
@@ -1855,20 +1865,22 @@
                             pcSessions[item.id].purpose = item.purpose || '';
                             pcSessions[item.id].duration = item.duration || 30;
 
-                            if(item.end_time && item.status === 'ACTIVE') {
+                            if(item.status === 'ACTIVE' && item.end_time) {
                                 let now = new Date();
                                 let end = new Date(item.end_time);
-                                let remaining = Math.max(0, Math.floor((end - now) / 1000));
-                                pcSessions[item.id].remainingSeconds = remaining;
-                                if(remaining === 0) {
+                                let remaining = Math.floor((end - now) / 1000);
+
+                                if(remaining > 0) {
+                                    pcSessions[item.id].remainingSeconds = remaining;
+                                    pcSessions[item.id].status = 'ACTIVE';
+                                } else {
+                                    pcSessions[item.id].remainingSeconds = 0;
                                     pcSessions[item.id].status = 'EXPIRED';
                                 }
                             } else if (item.status === 'AVAILABLE') {
                                 pcSessions[item.id].remainingSeconds = 0;
                                 pcSessions[item.id].studentName = '';
-                                if (currentClientPc === item.id) {
-                                    resetClientScreenLocally();
-                                }
+                                // JANGAN panggil resetClientScreenLocally() di sini supaya LocalStorage Client tidak terpadam
                             }
                         }
                     });
@@ -1924,7 +1936,8 @@
                           if(item.end_time && item.status === 'ACTIVE') {
                               let now = new Date();
                               let end = new Date(item.end_time);
-                              pcSessions[item.id].remainingSeconds = Math.max(0, Math.floor((end - now) / 1000));
+                              let remaining = Math.floor((end - now) / 1000);
+                              pcSessions[item.id].remainingSeconds = Math.max(0, remaining);
                           }
                           renderAdminGrid();
                       }
@@ -1943,24 +1956,31 @@
         function checkActiveSessionOnLoad() {
             const savedSession = localStorage.getItem('active_pc_session');
             if (savedSession) {
-                const pcData = JSON.parse(savedSession);
-                const now = new Date().getTime();
-                const endTime = new Date(pcData.endTime).getTime();
+                try {
+                    const pcData = JSON.parse(savedSession);
+                    const nowMs = Date.now();
+                    const endMs = new Date(pcData.endTime).getTime();
 
-                if (endTime > now) {
-                    currentClientPc = pcData.pcNo;
-                    
-                    document.getElementById('clientFormCard').classList.add('hidden');
-                    document.getElementById('mainHeader').classList.add('hidden');
-                    document.getElementById('clientMiniBarTimer').classList.remove('hidden');
-                    document.getElementById('clientWorkspaceMessage').classList.remove('hidden');
+                    if (!isNaN(endMs) && endMs > nowMs) {
+                        currentClientPc = pcData.pcNo;
+                        
+                        // Sembunyikan Borang Pendaftaran & Header Utama
+                        document.getElementById('clientFormCard')?.classList.add('hidden');
+                        document.getElementById('mainHeader')?.classList.add('hidden');
+                        
+                        // Paparkan Mini Bar & Workspace Client
+                        document.getElementById('clientMiniBarTimer')?.classList.remove('hidden');
+                        document.getElementById('clientWorkspaceMessage')?.classList.remove('hidden');
 
-                    document.getElementById('miniActivePcNo').innerText = pcData.pcNo;
-                    document.getElementById('miniActiveStudentName').innerText = pcData.studentName;
-                    document.getElementById('miniActiveStudentDetails').innerText = pcData.studentClass + ' • ' + pcData.purpose;
+                        document.getElementById('miniActivePcNo').innerText = pcData.pcNo;
+                        document.getElementById('miniActiveStudentName').innerText = pcData.studentName;
+                        document.getElementById('miniActiveStudentDetails').innerText = pcData.studentClass + ' • ' + pcData.purpose;
 
-                    startClientTimer(pcData.pcNo, pcData.endTime);
-                } else {
+                        startClientTimer(pcData.pcNo, pcData.endTime);
+                    } else {
+                        localStorage.removeItem('active_pc_session');
+                    }
+                } catch(e) {
                     localStorage.removeItem('active_pc_session');
                 }
             }
@@ -1971,6 +1991,12 @@
             loadSavedTheme();
             loadLocalSchoolConfig();
 
+            // 1. Tarik data profil & status PC terkini dari Supabase DAHULU
+            await fetchInitialSupabaseData();
+            await fetchLogsFromSupabase();
+            await fetchInitialChatMessages();
+
+            // 2. Tentukan paparan skrin (Admin vs Client)
             const savedView = localStorage.getItem('active_app_view');
             const urlParams = new URLSearchParams(window.location.search);
             const viewParam = urlParams.get('view');
@@ -1989,10 +2015,8 @@
                 }
             }
 
+            // 3. SEMAK & PEMULIHKAN SESI CLIENT DARIPADA LOCALSTORAGE
             checkActiveSessionOnLoad();
-            await fetchInitialSupabaseData();
-            await fetchLogsFromSupabase();
-            await fetchInitialChatMessages();
             setupRealtimeListener();
             setupChatRealtimeListener();
         };
