@@ -43,7 +43,7 @@
         }
 
         body.theme-corporate {
-            /* TEMA BIRU KOPRAT FORMAL - KONTRAST TEKS & KOTAK DIPERBAIKI */
+            /* TEMA BIRU KOPRAT FORMAL */
             --bg-main: #f0f4f8;
             --bg-card: #ffffff;
             --bg-subcard: #e2e8f0;
@@ -82,6 +82,23 @@
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.1); }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+
+        /* INPUT STYLES DEDIKASI MODAL ADMIN PANEL */
+        .admin-input {
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid #06b6d4;
+            color: #ffffff;
+            outline: none;
+            width: 100%;
+            padding: 8px 0;
+            font-size: 0.875rem;
+            letter-spacing: 0.05em;
+            transition: border-color 0.3s ease;
+        }
+        .admin-input:focus {
+            border-bottom-color: #22d3ee;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col antialiased relative">
@@ -163,6 +180,51 @@
         </form>
     </div>
 
+    <!-- MODAL LOG MASUK ADMIN (ADMIN PANEL REKA BENTUK KHAS) -->
+    <div id="adminLoginModal" class="hidden fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-[#0b131e] border border-cyan-950 rounded-lg p-8 sm:p-10 max-w-sm w-full shadow-2xl relative text-center">
+            <button type="button" onclick="closeAdminLoginModal()" class="absolute top-3 right-3 text-cyan-500/60 hover:text-cyan-400 text-sm">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <!-- ICON KUNCI LOGO -->
+            <div class="w-16 h-16 mx-auto mb-4 flex items-center justify-center text-cyan-400 text-4xl">
+                <i class="fa-solid fa-key -rotate-45"></i>
+            </div>
+
+            <h3 class="text-white font-extrabold text-lg tracking-widest uppercase mb-8">ADMIN PANEL</h3>
+
+            <form onsubmit="handleAdminLogin(event)" class="space-y-6 text-left">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">USERNAME</label>
+                    <input type="text" id="adminUsernameInput" required placeholder="Taip username..." class="admin-input">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">PASSWORD</label>
+                    <input type="password" id="adminPasswordInput" required placeholder="Taip password..." class="admin-input">
+                </div>
+
+                <div class="flex items-center justify-between text-xs pt-1">
+                    <label class="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer">
+                        <input type="checkbox" id="adminRememberMe" class="w-3.5 h-3.5 accent-cyan-500">
+                        Remember Me
+                    </label>
+                </div>
+
+                <div id="adminLoginError" class="hidden text-rose-400 text-xs font-bold text-center pt-1">
+                    ⚠️ Username atau Kata Laluan Salah!
+                </div>
+
+                <div class="pt-2 flex justify-end">
+                    <button type="submit" class="border border-cyan-500 hover:bg-cyan-500/20 text-cyan-400 font-extrabold text-xs px-6 py-2 tracking-widest uppercase transition-all duration-300">
+                        LOGIN
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- MODAL TETAPAN PROFIL SEKOLAH (KHAS UNTUK ADMIN) -->
     <div id="schoolConfigModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="custom-card border rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
@@ -219,6 +281,11 @@
             <!-- BUTANG TETAPAN PROFIL SEKOLAH (DIPAPARKAN PADA ADMIN SAHAJA) -->
             <button type="button" id="btnAdminSchoolConfig" onclick="openSchoolConfigModal()" class="hidden px-3 py-2 rounded-xl text-xs font-bold transition-all border border-indigo-500/30 bg-indigo-600/20 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-600/30 flex items-center gap-1.5">
                 <i class="fa-solid fa-gear"></i> Profil Sekolah
+            </button>
+
+            <!-- BUTANG LOG KELUAR ADMIN -->
+            <button type="button" id="btnAdminLogout" onclick="handleAdminLogout()" class="hidden px-3 py-2 rounded-xl text-xs font-bold transition-all border border-rose-500/30 bg-rose-600/20 text-rose-500 hover:bg-rose-600/30 flex items-center gap-1.5">
+                <i class="fa-solid fa-lock"></i> Log Keluar Admin
             </button>
 
             <!-- NAVIGASI MOD -->
@@ -405,7 +472,7 @@
                 </div>
             </div>
 
-            <!-- PUSAT KAWALAN CHAT LIVE ADMIN (KONTRAS WARNA TETAP DALAM DUA-DUA TEMA) -->
+            <!-- PUSAT KAWALAN CHAT LIVE ADMIN -->
             <div class="custom-card border rounded-2xl p-6 shadow-xl mt-8">
                 <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
                     <div>
@@ -458,7 +525,6 @@
                         </form>
                     </div>
 
-                    <!-- KOTAK PANDUAN GURU DENGAN TEKS JELAS SANGAT PADA BIRU KOPRAT & DARK MODE -->
                     <div class="custom-subcard border rounded-xl p-4 flex flex-col justify-between">
                         <div>
                             <h4 class="text-xs font-black uppercase mb-2 text-indigo-600 dark:text-indigo-400">Panduan Guru & Kawalan</h4>
@@ -536,6 +602,13 @@
             db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         }
 
+        // KREDENSIAL LOG MASUK ADMIN & STATUS SESI
+        const ADMIN_CREDENTIALS = {
+            username: "admin",
+            password: "admin123"
+        };
+        let isAdminLoggedIn = false;
+
         // TETAPAN PROFIL SEKOLAH & BILANGAN PC LALAI
         let schoolConfig = {
             name: "SK DATO' KLANA PETRA",
@@ -571,6 +644,54 @@
         let currentClientPc = "PC-05";
         let clientTimerInterval = null;
         let toastTimeout = null;
+
+        // LOGIK UTAMA PENGESAHAN ADMIN (ADMIN PANEL)
+        function checkAdminAuthOnLoad() {
+            const savedAuth = localStorage.getItem('pusat_akses_admin_authenticated');
+            if (savedAuth === 'true') {
+                isAdminLoggedIn = true;
+            }
+        }
+
+        function openAdminLoginModal() {
+            document.getElementById('adminUsernameInput').value = '';
+            document.getElementById('adminPasswordInput').value = '';
+            document.getElementById('adminLoginError').classList.add('hidden');
+            document.getElementById('adminLoginModal').classList.remove('hidden');
+        }
+
+        function closeAdminLoginModal() {
+            document.getElementById('adminLoginModal').classList.add('hidden');
+        }
+
+        function handleAdminLogin(e) {
+            if (e) e.preventDefault();
+            const u = document.getElementById('adminUsernameInput')?.value.trim();
+            const p = document.getElementById('adminPasswordInput')?.value.trim();
+            const rememberMe = document.getElementById('adminRememberMe')?.checked;
+
+            if (u === ADMIN_CREDENTIALS.username && p === ADMIN_CREDENTIALS.password) {
+                isAdminLoggedIn = true;
+                if (rememberMe) {
+                    localStorage.setItem('pusat_akses_admin_authenticated', 'true');
+                } else {
+                    sessionStorage.setItem('pusat_akses_admin_authenticated', 'true');
+                }
+                closeAdminLoginModal();
+                switchView('admin');
+            } else {
+                document.getElementById('adminLoginError').classList.remove('hidden');
+            }
+        }
+
+        function handleAdminLogout() {
+            if (confirm("Adakah anda pasti untuk log keluar dari Dashboard Admin?")) {
+                isAdminLoggedIn = false;
+                localStorage.removeItem('pusat_akses_admin_authenticated');
+                sessionStorage.removeItem('pusat_akses_admin_authenticated');
+                switchView('client');
+            }
+        }
 
         // FUNGSI PENUKARAN BILANGAN PC (10 PC / 20 PC)
         function changePcCount(newLimit) {
@@ -881,12 +1002,19 @@
             renderLogTable();
         }
 
+        // SWITH VIEW DENGAN CONSTRAIN LOG MASUK ADMIN
         function switchView(mode) {
             const clientSec = document.getElementById('view-client');
             const adminSec = document.getElementById('view-admin');
             const btnClient = document.getElementById('btnViewClient');
             const btnAdmin = document.getElementById('btnViewAdmin');
             const btnSchoolConfig = document.getElementById('btnAdminSchoolConfig');
+            const btnAdminLogout = document.getElementById('btnAdminLogout');
+
+            if (mode === 'admin' && !isAdminLoggedIn) {
+                openAdminLoginModal();
+                return;
+            }
 
             localStorage.setItem('active_app_view', mode);
 
@@ -894,6 +1022,7 @@
                 clientSec.classList.remove('hidden');
                 adminSec.classList.add('hidden');
                 if (btnSchoolConfig) btnSchoolConfig.classList.add('hidden');
+                if (btnAdminLogout) btnAdminLogout.classList.add('hidden');
 
                 btnClient.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 bg-indigo-600 text-white shadow-md";
                 btnAdmin.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 text-slate-400 hover:text-white";
@@ -901,6 +1030,7 @@
                 clientSec.classList.add('hidden');
                 adminSec.classList.remove('hidden');
                 if (btnSchoolConfig) btnSchoolConfig.classList.remove('hidden');
+                if (btnAdminLogout) btnAdminLogout.classList.remove('hidden');
 
                 btnClient.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 text-slate-400 hover:text-white";
                 btnAdmin.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 bg-indigo-600 text-white shadow-md";
@@ -1755,6 +1885,7 @@
         }
 
         window.onload = async function() {
+            checkAdminAuthOnLoad();
             loadSavedTheme();
             loadLocalSchoolConfig();
 
@@ -1762,7 +1893,7 @@
             const urlParams = new URLSearchParams(window.location.search);
             const viewParam = urlParams.get('view');
 
-            if (viewParam === 'admin' || savedView === 'admin') {
+            if ((viewParam === 'admin' || savedView === 'admin') && isAdminLoggedIn) {
                 switchView('admin');
             } else {
                 switchView('client');
