@@ -1870,8 +1870,7 @@
             }
         }
 
-        function openPrintTab() {
-            let printWindow = window.open('', '_blank');
+      function openPrintTab() {
             let todayDate = new Date().toLocaleDateString('ms-MY', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
             let rowsHTML = '';
@@ -1972,8 +1971,14 @@
                 </html>
             `;
 
-            printWindow.document.write(printContent);
-            printWindow.document.close();
+            // PERUBAHAN UTAMA: Gunakan Blob URL untuk sokongan penuh Microsoft Edge & Chrome
+            const blob = new Blob([printContent], { type: 'text/html' });
+            const blobUrl = URL.createObjectURL(blob);
+            const printWindow = window.open(blobUrl, '_blank');
+
+            if (!printWindow) {
+                alert("Sila benarkan Pop-Up pada penyemak imbas anda untuk mencetak.");
+            }
         }
 
         async function stopAdminSession(pcNo) {
