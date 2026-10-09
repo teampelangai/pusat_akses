@@ -1870,7 +1870,7 @@
             }
         }
 
-      function openPrintTab() {
+   function openPrintTab() {
             let todayDate = new Date().toLocaleDateString('ms-MY', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
             let rowsHTML = '';
@@ -1915,9 +1915,39 @@
                         .footer { margin-top: 40px; display: flex; justify-content: space-between; font-size: 9pt; }
                         .signature-box { width: 250px; text-align: center; }
                         .signature-line { margin-top: 45px; border-bottom: 1px solid #000; }
+
+                        /* BAR BUTANG CETAK (Sembunyi secara automatik apabila dicetak) */
+                        .no-print-bar {
+                            background: #0f172a;
+                            color: #fff;
+                            padding: 12px;
+                            text-align: center;
+                            border-radius: 8px;
+                            margin-bottom: 20px;
+                        }
+                        .btn-print {
+                            background: #2563eb;
+                            color: white;
+                            border: none;
+                            padding: 10px 24px;
+                            font-size: 12pt;
+                            font-weight: bold;
+                            border-radius: 6px;
+                            cursor: pointer;
+                            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+                        }
+                        .btn-print:hover { background: #1d4ed8; }
+
+                        @media print {
+                            .no-print-bar { display: none !important; }
+                        }
                     </style>
                 </head>
                 <body>
+                    <div class="no-print-bar">
+                        <button onclick="window.print()" class="btn-print">🖨️ Tekan Di Sini Untuk Cetak Laporan</button>
+                    </div>
+
                     <div class="header">
                         <h2>${schoolConfig.name} (${schoolConfig.code})</h2>
                         <h3>REKOD LOG PENGGUNAAN KOMPUTER PUSAT AKSES</h3>
@@ -1959,24 +1989,16 @@
                             <p style="margin-top: 5px; font-weight: bold;">( Guru Besar / PK Pentadbiran )</p>
                         </div>
                     </div>
-
-                    <script>
-                        window.onload = function() {
-                            setTimeout(function() {
-                                window.print();
-                            }, 500);
-                        }
-                    <\/script>
                 </body>
                 </html>
             `;
 
-            // PERUBAHAN UTAMA: Gunakan Blob URL untuk sokongan penuh Microsoft Edge & Chrome
-            const blob = new Blob([printContent], { type: 'text/html' });
-            const blobUrl = URL.createObjectURL(blob);
-            const printWindow = window.open(blobUrl, '_blank');
-
-            if (!printWindow) {
+            let printWindow = window.open('', '_blank');
+            if (printWindow) {
+                printWindow.document.open();
+                printWindow.document.write(printContent);
+                printWindow.document.close();
+            } else {
                 alert("Sila benarkan Pop-Up pada penyemak imbas anda untuk mencetak.");
             }
         }
