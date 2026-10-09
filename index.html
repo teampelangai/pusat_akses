@@ -1245,44 +1245,50 @@
             renderLogTable();
         }
 
-        function switchView(mode) {
-            const clientSec = document.getElementById('view-client');
-            const adminSec = document.getElementById('view-admin');
-            const btnClient = document.getElementById('btnViewClient');
-            const btnAdmin = document.getElementById('btnViewAdmin');
-            const btnSchoolConfig = document.getElementById('btnAdminSchoolConfig');
-            const btnAdminLogout = document.getElementById('btnAdminLogout');
+       function switchView(mode) {
+    const clientSec = document.getElementById('view-client');
+    const adminSec = document.getElementById('view-admin');
+    const btnClient = document.getElementById('btnViewClient');
+    const btnAdmin = document.getElementById('btnViewAdmin');
+    const btnSchoolConfig = document.getElementById('btnAdminSchoolConfig');
+    const btnAdminLogout = document.getElementById('btnAdminLogout');
 
-            if (mode === 'admin' && !isAdminLoggedIn) {
-                openAdminLoginModal();
-                return;
-            }
+    // Semak jika cuba masuk Admin tetapi belum login
+    if (mode === 'admin' && !isAdminLoggedIn) {
+        openAdminLoginModal();
+        return;
+    }
 
-            localStorage.setItem('active_app_view', mode);
+    localStorage.setItem('active_app_view', mode);
 
-            if(mode === 'client') {
-                clientSec.classList.remove('hidden');
-                adminSec.classList.add('hidden');
-                if (btnSchoolConfig) btnSchoolConfig.classList.add('hidden');
-                if (btnAdminLogout) btnAdminLogout.classList.add('hidden');
+    if (mode === 'client') {
+        // Tunjukkan pandangan Client & sembunyikan butang Admin
+        clientSec.classList.remove('hidden');
+        adminSec.classList.add('hidden');
+        if (btnSchoolConfig) btnSchoolConfig.classList.add('hidden');
+        if (btnAdminLogout) btnAdminLogout.classList.add('hidden');
 
-                btnClient.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 bg-indigo-600 text-white shadow-md";
-                btnAdmin.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 text-slate-400 hover:text-white";
-                
-                checkActiveSessionOnLoad();
-            } else {
-                clientSec.classList.add('hidden');
-                adminSec.classList.remove('hidden');
-                if (btnSchoolConfig) btnSchoolConfig.remove('hidden');
-                if (btnAdminLogout) btnAdminLogout.remove('hidden');
+        btnClient.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 bg-indigo-600 text-white shadow-md";
+        btnAdmin.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 text-slate-400 hover:text-white";
+        
+        checkActiveSessionOnLoad();
+    } else {
+        // Tunjukkan pandangan Admin & PAPARKAN BUTANG ADMIN
+        clientSec.classList.add('hidden');
+        adminSec.classList.remove('hidden');
+        
+        // PASTI BUANG CLASS 'hidden' DENGAN BETUL
+        if (btnSchoolConfig) btnSchoolConfig.classList.remove('hidden');
+        if (btnAdminLogout) btnAdminLogout.classList.remove('hidden');
 
-                btnClient.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 text-slate-400 hover:text-white";
-                btnAdmin.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 bg-indigo-600 text-white shadow-md";
-                renderAdminGrid();
-                fetchLogsFromSupabase();
-                renderAdminChat();
-            }
-        }
+        btnClient.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 text-slate-400 hover:text-white";
+        btnAdmin.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 bg-indigo-600 text-white shadow-md";
+        
+        renderAdminGrid();
+        fetchLogsFromSupabase();
+        renderAdminChat();
+    }
+}
 
         function toggleAdminChatStatus() {
             const toggle = document.getElementById('adminChatToggle');
