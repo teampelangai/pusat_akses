@@ -532,8 +532,13 @@
                             </select>
                         </div>
 
+                        <!-- BUTANG SHUTDOWN ALL -->
+                        <button type="button" onclick="sendSystemCommand('ALL', 'SHUTDOWN')" class="bg-rose-700 hover:bg-rose-600 text-white font-extrabold text-xs py-2 px-3 rounded-xl transition flex items-center gap-2 shadow-lg">
+                            <i class="fa-solid fa-power-off"></i> 🔴 Shutdown Semua PC
+                        </button>
+
                         <button type="button" onclick="resetAllSessions()" class="bg-rose-600/20 hover:bg-rose-600/30 text-rose-600 dark:text-rose-400 border border-rose-500/30 font-bold text-xs py-2 px-3 rounded-xl transition flex items-center gap-2">
-                            <i class="fa-solid fa-power-off"></i> Reset Semua PC
+                            <i class="fa-solid fa-rotate-right"></i> Reset Web Sesi
                         </button>
                     </div>
                 </div>
@@ -715,6 +720,29 @@
         let currentClientPc = "PC-05";
         let clientTimerInterval = null;
         let toastTimeout = null;
+
+        // FUNGSI MENGHANTAR ARAHAN FIZIKAL WINDOWS KE SUPABASE (SHUTDOWN / RESTART)
+        async function sendSystemCommand(targetPc, command) {
+            const actionText = command === 'SHUTDOWN' ? 'MENUTUP' : 'MEMULAKAN SEMULA';
+            const targetText = targetPc === 'ALL' ? 'SEMUA PC' : targetPc;
+
+            if (confirm(`Adakah anda pasti untuk ${actionText} fizikal ${targetText}?`)) {
+                if (db) {
+                    try {
+                        await db.from('pc_commands').insert({
+                            target_pc: targetPc,
+                            command: command,
+                            status: 'PENDING'
+                        });
+                        alert(`Arahan ${command} telah dihantar ke ${targetText}!`);
+                    } catch (err) {
+                        alert("Gagal menghantar arahan ke Supabase: " + err.message);
+                    }
+                } else {
+                    alert("Sambungan Supabase tidak aktif.");
+                }
+            }
+        }
 
         function playBuzzAudio() {
             try {
@@ -1072,16 +1100,28 @@
             }
         }
 
-        function getSortedUsageHistory() {
-            return [...usageHistory].sort((a, b) => {
-                let numA = parseInt(a.pcNo.replace('PC-', ''), 10) || 0;
-                let numB = parseInt(b.pcNo.replace('PC-', ''), 10) || 0;
-                if (numA !== numB) {
-                    return numA - numB;
-                }
-                return (a.startTime || '').localeCompare(b.startTime || '');
-            });
+     function getSortedUsageHistory() {
+    return [...usageHistory].sort((a, b) => {
+        // 1. Tukar tarikh format 'DD/MM/YYYY' ke 'YYYY-MM-DD' untuk perbandingan tepat
+        let dateA = (a.date || '').split('/').reverse().join('-');
+        let dateB = (b.date || '').split('/').reverse().join('-');
+
+        // Perbandingan Tarikh (Terdahulu/Lama di atas: Ascending)
+        if (dateA !== dateB) {
+            return dateA.localeCompare(dateB); 
         }
+
+        // 2. Jika tarikh sama, susun mengikut Nombor PC (Ascending: PC-01, PC-02...)
+        let numA = parseInt((a.pcNo || '').replace('PC-', ''), 10) || 0;
+        let numB = parseInt((b.pcNo || '').replace('PC-', ''), 10) || 0;
+        if (numA !== numB) {
+            return numA - numB;
+        }
+
+        // 3. Jika PC sama, susun mengikut Masa Mula
+        return (a.startTime || '').localeCompare(b.startTime || '');
+    });
+}
 
         function exportLogToCSV() {
             const sortedHistory = getSortedUsageHistory();
@@ -1233,8 +1273,8 @@
             } else {
                 clientSec.classList.add('hidden');
                 adminSec.classList.remove('hidden');
-                if (btnSchoolConfig) btnSchoolConfig.classList.remove('hidden');
-                if (btnAdminLogout) btnAdminLogout.classList.remove('hidden');
+                if (btnSchoolConfig) btnSchoolConfig.remove('hidden');
+                if (btnAdminLogout) btnAdminLogout.remove('hidden');
 
                 btnClient.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 text-slate-400 hover:text-white";
                 btnAdmin.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 bg-indigo-600 text-white shadow-md";
@@ -1752,9 +1792,9 @@
                     infoHTML = '<div class="py-4 text-center text-xs opacity-50 font-medium">Sedia Digunakan</div>';
                 }
 
-               let extraActionBtn = pc.status === 'ACTIVE' 
-    ? '<button type="button" onclick="addExtraMinutesAdmin(\'' + pcNo + '\', 15)" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 text-xs font-bold py-1.5 px-2 rounded-lg transition shrink-0" title="Tambah 15 Minit">+15m</button>' 
-    : '';
+                let extraActionBtn = pc.status === 'ACTIVE' 
+                    ? '<button type="button" onclick="addExtraMinutesAdmin(\'' + pcNo + '\', 15)" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 text-xs font-bold py-1.5 px-2 rounded-lg transition shrink-0" title="Tambah 15 Minit">+15m</button>' 
+                    : '';
 
                 let cardHTML = '<div class="rounded-2xl p-4 flex flex-col justify-between transition-all ' + cardColor + '">' +
                                 '<div>' +
@@ -1766,9 +1806,20 @@
                                     '</div>' +
                                     infoHTML +
                                 '</div>' +
-                                '<div class="pt-2 border-t border-slate-700/50 flex items-center gap-1.5 mt-2">' +
-                                    '<button type="button" onclick="stopAdminSession(\'' + pcNo + '\')" class="w-full custom-subcard hover:bg-slate-700/20 text-xs font-bold py-1.5 rounded-lg transition">Reset PC</button>' +
-                                    extraActionBtn +
+                                '<div class="pt-2 border-t border-slate-700/50 flex flex-col gap-1.5 mt-2">' +
+                                    '<div class="flex items-center gap-1.5">' +
+                                        '<button type="button" onclick="stopAdminSession(\'' + pcNo + '\')" class="w-full custom-subcard hover:bg-slate-700/20 text-[11px] font-bold py-1.5 rounded-lg transition">Reset Web</button>' +
+                                        extraActionBtn +
+                                    '</div>' +
+                                    '<!-- BUTANG KAWALAN FIZIKAL SYSTEM -->' +
+                                    '<div class="grid grid-cols-2 gap-1 pt-1 border-t border-slate-800/80">' +
+                                        '<button type="button" onclick="sendSystemCommand(\'' + pcNo + '\', \'SHUTDOWN\')" class="bg-rose-600/20 hover:bg-rose-600/40 text-rose-400 border border-rose-500/30 text-[10px] font-black py-1 px-1.5 rounded-md transition flex items-center justify-center gap-1" title="Shutdown OS Windows Fizikal">' +
+                                            '<i class="fa-solid fa-power-off"></i> Off' +
+                                        '</button>' +
+                                        '<button type="button" onclick="sendSystemCommand(\'' + pcNo + '\', \'RESTART\')" class="bg-amber-600/20 hover:bg-amber-600/40 text-amber-400 border border-amber-500/30 text-[10px] font-black py-1 px-1.5 rounded-md transition flex items-center justify-center gap-1" title="Restart OS Windows Fizikal">' +
+                                            '<i class="fa-solid fa-rotate-right"></i> Reboot' +
+                                        '</button>' +
+                                    '</div>' +
                                 '</div>' +
                                '</div>';
 
@@ -1954,7 +2005,7 @@
 
         async function resetAllSessions() {
             const limit = schoolConfig.pcLimit || 20;
-            if(confirm(`Adakah anda pasti untuk reset status SEMUA ${limit} Komputer?`)) {
+            if(confirm(`Adakah anda pasti untuk reset status web SEMUA ${limit} Komputer?`)) {
                 for(let i=1; i<=limit; i++) {
                     let id = "PC-" + (i < 10 ? '0' + i : i);
                     await recordActualEndTime(id);
@@ -2105,6 +2156,15 @@
                               pcSessions[item.id].endTime = end;
 
                               if (currentClientPc === item.id) {
+                                  // Kemaskini localStorage Client supaya tidak hilang apabila di-refresh
+                                  const savedSession = localStorage.getItem('active_pc_session');
+                                  if (savedSession) {
+                                      try {
+                                          let parsed = JSON.parse(savedSession);
+                                          parsed.endTime = item.end_time;
+                                          localStorage.setItem('active_pc_session', JSON.stringify(parsed));
+                                      } catch(e){}
+                                  }
                                   startClientTimer(item.id, end);
                               }
                           } else if (item.status === 'EXPIRED' && item.end_time) {
@@ -2126,17 +2186,23 @@
             }
         }
 
-        function checkActiveSessionOnLoad() {
+        async function checkActiveSessionOnLoad() {
             const savedSession = localStorage.getItem('active_pc_session');
             if (savedSession) {
                 try {
                     const pcData = JSON.parse(savedSession);
+                    currentClientPc = pcData.pcNo;
+
+                    // Semak jika terdapat end_time terkini yang disimpan dalam memori pcSessions dari Supabase
+                    let activeEndTime = pcData.endTime;
+                    if (pcSessions[currentClientPc] && pcSessions[currentClientPc].endTime) {
+                        activeEndTime = pcSessions[currentClientPc].endTime;
+                    }
+
                     const nowMs = Date.now();
-                    const endMs = new Date(pcData.endTime).getTime();
+                    const endMs = new Date(activeEndTime).getTime();
 
                     if (!isNaN(endMs) && endMs > nowMs) {
-                        currentClientPc = pcData.pcNo;
-                        
                         document.getElementById('clientFormCard')?.classList.add('hidden');
                         document.getElementById('mainHeader')?.classList.add('hidden');
                         
@@ -2147,7 +2213,7 @@
                         document.getElementById('miniActiveStudentName').innerText = pcData.studentName;
                         document.getElementById('miniActiveStudentDetails').innerText = pcData.studentClass + ' • ' + pcData.purpose;
 
-                        startClientTimer(pcData.pcNo, pcData.endTime);
+                        startClientTimer(currentClientPc, activeEndTime);
                     } else {
                         localStorage.removeItem('active_pc_session');
                     }
