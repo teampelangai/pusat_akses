@@ -2245,18 +2245,38 @@ async function manualRefreshAdminData() {
                       pcSessions[item.id].studentName = '';
                   }
                   
-                  if(item.end_time && item.status === 'ACTIVE') {
-                      let now = new Date();
-                      let end = new Date(item.end_time);
-                      let remaining = Math.floor((end - now) / 1000);
-                      pcSessions[item.id].remainingSeconds = Math.max(0, remaining);
-                      pcSessions[item.id].endTime = end;
-                  } else if (item.status === 'EXPIRED' && item.end_time) {
-                      let end = new Date(item.end_time);
-                      const exactEndTimeStr = end.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
-                      recordActualEndTime(item.id, exactEndTimeStr);
-                  }
+                if(item.end_time && item.status === 'ACTIVE') {
+    let now = new Date();
+    let end = new Date(item.end_time);
+    let remaining = Math.floor((end - now) / 1000);
+    pcSessions[item.id].remainingSeconds = Math.max(0, remaining);
+    pcSessions[item.id].endTime = end;
 
+    // 🔽 [TAMBAH BAHAGIAN INI] KEMASKINI PEMASA CLIENT SECARA REAL-TIME 🔽
+    const activePcId = (currentClientPc || '').toUpperCase();
+    const incomingPcId = (item.id || '').toUpperCase();
+
+    if (activePcId === incomingPcId) {
+        // 1. Kemaskini LocalStorage Client supaya baki baharu kekal jika tab di-refresh
+        const savedSession = localStorage.getItem('active_pc_session');
+        if (savedSession) {
+            try {
+                let parsed = JSON.parse(savedSession);
+                parsed.endTime = item.end_time;
+                localStorage.setItem('active_pc_session', JSON.stringify(parsed));
+            } catch(e){}
+        }
+
+        // 2. Paksa pemasa skrin Client berjalan serta-merta menggunakan waktu tamat baharu (+15m)
+        startClientTimer(item.id, end);
+    }
+    // 🔼 [TAMAT BAHAGIAN BAHARU] 🔼
+
+} else if (item.status === 'EXPIRED' && item.end_time) {
+    let end = new Date(item.end_time);
+    const exactEndTimeStr = end.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
+    recordActualEndTime(item.id, exactEndTimeStr);
+}
                   // 🔽 PAKSA GRID LUKIS SEMULA TERUS PADA TELEFON / PC ADMIN 🔽
                   renderAdminGrid();
               }
