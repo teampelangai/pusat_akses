@@ -2637,9 +2637,27 @@ function checkAnswer(selectedCode) {
     }
 }
 
+// ==========================================
+// 🧩 PENGURUSAN KUIZ HARIAN (SUPABASE AUTO-DETECT)
+// ==========================================
+
+// Fungsi automatik untuk mengesan pautan Supabase sedia ada
+function getSupabaseInstance() {
+    if (typeof supabaseClient !== 'undefined') return supabaseClient;
+    if (typeof supabase !== 'undefined' && typeof supabase.from === 'function') return supabase;
+    if (typeof _supabase !== 'undefined') return _supabase;
+    return null;
+}
+
 // 1. GURU SIAR SOALAN DARI ADMIN (SIMPAN KE SUPABASE DATABASE)
 async function publishCustomQuiz(event) {
     event.preventDefault();
+
+    const client = getSupabaseInstance();
+    if (!client) {
+        alert("Ralat Sambungan: Pautan Supabase belum sedia dalam sistem.");
+        return;
+    }
 
     const category = document.getElementById('adminQuizCategory').value;
     const qText = document.getElementById('adminQuizQuestion').value.trim();
@@ -2655,8 +2673,7 @@ async function publishCustomQuiz(event) {
     }
 
     try {
-        // Hantar data mengikut struktur lajur daily_quiz di Supabase
-        const { data, error } = await supabaseClient
+        const { data, error } = await client
             .from('daily_quiz')
             .upsert({
                 id: 1,
@@ -2670,14 +2687,12 @@ async function publishCustomQuiz(event) {
                 updated_at: new Date().toISOString()
             });
 
-        // Jika Supabase memulangkan ralat, tangkap dan papar ralat sebenar
         if (error) {
             console.error("Ralat Supabase:", error);
-            alert("Ralat Supabase: " + error.message + "\nDetails: " + (error.details || error.hint || 'Tiada maklumat tambahan'));
+            alert("Ralat Supabase: " + error.message);
             return;
         }
 
-        // Kemaskini status tag Admin & muat semula paparan kuiz
         updateQuizStatusTag(true);
         await loadRandomQuiz();
 
@@ -2691,8 +2706,11 @@ async function publishCustomQuiz(event) {
 
 // 2. PADAM SOALAN KUSTOM / KEMBALI KE DEFAULT
 async function resetToDefaultQuiz() {
+    const client = getSupabaseInstance();
+    if (!client) return;
+
     try {
-        const { error } = await supabaseClient.from('daily_quiz').delete().eq('id', 1);
+        const { error } = await client.from('daily_quiz').delete().eq('id', 1);
         if (error) throw error;
 
         if(document.getElementById('adminQuizForm')) document.getElementById('adminQuizForm').reset();
@@ -2710,39 +2728,43 @@ async function loadRandomQuiz() {
     const feedback = document.getElementById('quizFeedback');
     if (feedback) feedback.classList.add('hidden');
 
-    try {
-        const { data, error } = await supabaseClient
-            .from('daily_quiz')
-            .select('*')
-            .eq('id', 1)
-            .maybeSingle();
+    const client = getSupabaseInstance();
 
-        if (data && data.question) {
-            currentQuiz = {
-                category: data.category,
-                q: data.question,
-                options: [`A) ${data.opt_a}`, `B) ${data.opt_b}`, `C) ${data.opt_c}`, `D) ${data.opt_d}`],
-                answer: data.answer
-            };
-            updateQuizStatusTag(true);
-        } else {
-            // Jika tiada soalan kustom dalam DB, pilih secara rawak dari Bank Soalan Statik
+    if (client) {
+        try {
+            const { data, error } = await client
+                .from('daily_quiz')
+                .select('*')
+                .eq('id', 1)
+                .maybeSingle();
+
+            if (data && data.question) {
+                currentQuiz = {
+                    category: data.category,
+                    q: data.question,
+                    options: [`A) ${data.opt_a}`, `B) ${data.opt_b}`, `C) ${data.opt_c}`, `D) ${data.opt_d}`],
+                    answer: data.answer
+                };
+                updateQuizStatusTag(true);
+            } else {
+                const randomIndex = Math.floor(Math.random() * quizBank.length);
+                currentQuiz = quizBank[randomIndex];
+                updateQuizStatusTag(false);
+            }
+        } catch (err) {
             const randomIndex = Math.floor(Math.random() * quizBank.length);
             currentQuiz = quizBank[randomIndex];
-            updateQuizStatusTag(false);
         }
-    } catch (err) {
+    } else {
         const randomIndex = Math.floor(Math.random() * quizBank.length);
         currentQuiz = quizBank[randomIndex];
     }
 
-    // Paparkan Kategori & Soalan
     const badge = document.getElementById('quizCategoryBadge');
     const qText = document.getElementById('quizQuestionText');
     if (badge) badge.innerText = currentQuiz.category;
     if (qText) qText.innerText = currentQuiz.q;
 
-    // Bina Butang Jawapan A, B, C, D
     const container = document.getElementById('quizOptionsContainer');
     if (!container) return;
     
