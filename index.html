@@ -2638,24 +2638,16 @@ function checkAnswer(selectedCode) {
 }
 
 // ==========================================
-// 🧩 PENGURUSAN KUIZ HARIAN (SUPABASE AUTO-DETECT)
+// 🧩 PENGURUSAN KUIZ HARIAN (GUNAKAN 'db')
 // ==========================================
-
-// Fungsi automatik untuk mengesan pautan Supabase sedia ada
-function getSupabaseInstance() {
-    if (typeof supabaseClient !== 'undefined') return supabaseClient;
-    if (typeof supabase !== 'undefined' && typeof supabase.from === 'function') return supabase;
-    if (typeof _supabase !== 'undefined') return _supabase;
-    return null;
-}
 
 // 1. GURU SIAR SOALAN DARI ADMIN (SIMPAN KE SUPABASE DATABASE)
 async function publishCustomQuiz(event) {
     event.preventDefault();
 
-    const client = getSupabaseInstance();
-    if (!client) {
-        alert("Ralat Sambungan: Pautan Supabase belum sedia dalam sistem.");
+    // Semak sambungan Supabase ('db')
+    if (typeof db === 'undefined' || !db) {
+        alert("Ralat Sambungan: Pautan Supabase ('db') belum sedia. Sila muat semula halaman.");
         return;
     }
 
@@ -2673,7 +2665,7 @@ async function publishCustomQuiz(event) {
     }
 
     try {
-        const { data, error } = await client
+        const { data, error } = await db
             .from('daily_quiz')
             .upsert({
                 id: 1,
@@ -2706,11 +2698,10 @@ async function publishCustomQuiz(event) {
 
 // 2. PADAM SOALAN KUSTOM / KEMBALI KE DEFAULT
 async function resetToDefaultQuiz() {
-    const client = getSupabaseInstance();
-    if (!client) return;
+    if (typeof db === 'undefined' || !db) return;
 
     try {
-        const { error } = await client.from('daily_quiz').delete().eq('id', 1);
+        const { error } = await db.from('daily_quiz').delete().eq('id', 1);
         if (error) throw error;
 
         if(document.getElementById('adminQuizForm')) document.getElementById('adminQuizForm').reset();
@@ -2723,16 +2714,14 @@ async function resetToDefaultQuiz() {
     }
 }
 
-// 3. MUAT SOALAN DI CLIENT (AMBIL DARI SUPABASE DATABASE / FALLBACK TO BANK)
+// 3. MUAT SOALAN DI CLIENT
 async function loadRandomQuiz() {
     const feedback = document.getElementById('quizFeedback');
     if (feedback) feedback.classList.add('hidden');
 
-    const client = getSupabaseInstance();
-
-    if (client) {
+    if (typeof db !== 'undefined' && db) {
         try {
-            const { data, error } = await client
+            const { data, error } = await db
                 .from('daily_quiz')
                 .select('*')
                 .eq('id', 1)
