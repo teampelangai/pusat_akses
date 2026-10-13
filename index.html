@@ -2671,7 +2671,7 @@ function checkAnswer(selectedCode) {
 // Variable Global Untuk Menyimpan Soalan Siaran Admin
 let customAdminQuiz = null;
 
-// Fungsi Guru Menyiarkan Soalan Dari Admin Form
+// 1. FUNGSI GURU MENYIARKAN SOALAN DARI ADMIN FORM (REALTIME BROADCAST)
 function publishCustomQuiz(event) {
     event.preventDefault();
 
@@ -2688,13 +2688,24 @@ function publishCustomQuiz(event) {
         return;
     }
 
-    // Simpan data soalan khas guru
-    customAdminQuiz = {
+    const quizPayload = {
         category: category,
         q: qText,
         options: [`A) ${optA}`, `B) ${optB}`, `C) ${optC}`, `D) ${optD}`],
         answer: correct
     };
+
+    // Simpan di Admin tempatan
+    customAdminQuiz = quizPayload;
+
+    // HANTAR VIA SUPABASE CHANNEL (SUPAYA CLIENT PENERIMA TERUS DAPAT SOALAN)
+    if (typeof pc_sessions_channel !== 'undefined' && pc_sessions_channel) {
+        pc_sessions_channel.send({
+            type: 'broadcast',
+            event: 'NEW_QUIZ_PUBLISHED',
+            payload: quizPayload
+        });
+    }
 
     // Kemaskini tag status Admin
     const statusTag = document.getElementById('activeQuizStatusTag');
@@ -2703,18 +2714,21 @@ function publishCustomQuiz(event) {
         statusTag.innerText = "Status: Soalan Kustom Disiarkan 🚀";
     }
 
-    // Hantar Isyarat Real-Time Ke Semua PC Client (Guna Supabase / Channel)
-    if (typeof sendBroadcastSignal === 'function') {
-        sendBroadcastSignal('UPDATE_QUIZ', customAdminQuiz);
-    }
-
     alert("🎉 Soalan Harian berjaya disiarkan ke semua PC Client!");
 }
 
-// Tetap Semula Ke Bank Soalan Rawak
+// 2. TETAP SEMULA KE BANK SOALAN RAWAK
 function resetToDefaultQuiz() {
     customAdminQuiz = null;
     document.getElementById('adminQuizForm').reset();
+
+    // Hantar isyarat reset ke Supabase Channel
+    if (typeof pc_sessions_channel !== 'undefined' && pc_sessions_channel) {
+        pc_sessions_channel.send({
+            type: 'broadcast',
+            event: 'RESET_QUIZ_DEFAULT'
+        });
+    }
 
     const statusTag = document.getElementById('activeQuizStatusTag');
     if(statusTag) {
@@ -2725,12 +2739,35 @@ function resetToDefaultQuiz() {
     alert("Sistem dikembalikan kepada Bank Soalan Rawak.");
 }
 
-// Kemaskini Fungsi `loadRandomQuiz()` Supaya Utamakan Soalan Admin Jika Ada
+// 3. LISTENERS SUPABASE UNTUK CLIENT TERIMA SOALAN REALTIME DARI ADMIN
+if (typeof pc_sessions_channel !== 'undefined' && pc_sessions_channel) {
+    pc_sessions_channel.on('broadcast', { event: 'NEW_QUIZ_PUBLISHED' }, payload => {
+        if (payload && payload.payload) {
+            customAdminQuiz = payload.payload;
+            
+            // Jika kad kuiz di client sedang terbuka, terus kemaskini soalan
+            const quizCard = document.getElementById('clientQuizCard');
+            if (quizCard && !quizCard.classList.contains('hidden')) {
+                loadRandomQuiz();
+            }
+        }
+    });
+
+    pc_sessions_channel.on('broadcast', { event: 'RESET_QUIZ_DEFAULT' }, () => {
+        customAdminQuiz = null;
+        const quizCard = document.getElementById('clientQuizCard');
+        if (quizCard && !quizCard.classList.contains('hidden')) {
+            loadRandomQuiz();
+        }
+    });
+}
+
+// 4. FUNGSI PAPAR SOALAN DI CLIENT (UTAMAKAN SOALAN ADMIN)
 function loadRandomQuiz() {
     const feedback = document.getElementById('quizFeedback');
     if (feedback) feedback.classList.add('hidden');
 
-    // Jika Guru ada siar soalan kustom, guna soalan kustom tersebut
+    // Jika Guru ada siar soalan kustom dari Admin, guna soalan kustom tersebut
     if (customAdminQuiz) {
         currentQuiz = customAdminQuiz;
     } else {
@@ -2760,6 +2797,7 @@ function loadRandomQuiz() {
         `;
     }).join('');
 }
+
     </script>
 </body>
 </html>
