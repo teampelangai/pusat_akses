@@ -2272,74 +2272,92 @@ async function manualRefreshAdminData() {
     }
 }
 
-        async function checkActiveSessionOnLoad() {
-            const savedSession = localStorage.getItem('active_pc_session');
-            if (savedSession) {
-                try {
-                    const pcData = JSON.parse(savedSession);
-                    currentClientPc = pcData.pcNo;
+       async function checkActiveSessionOnLoad() {
+    const savedSession = localStorage.getItem('active_pc_session');
+    if (savedSession) {
+        try {
+            const pcData = JSON.parse(savedSession);
+            currentClientPc = pcData.pcNo;
 
-                    // Semak jika terdapat end_time terkini yang disimpan dalam memori pcSessions dari Supabase
-                    let activeEndTime = pcData.endTime;
-                    if (pcSessions[currentClientPc] && pcSessions[currentClientPc].endTime) {
-                        activeEndTime = pcSessions[currentClientPc].endTime;
-                    }
-
-                    const nowMs = Date.now();
-                    const endMs = new Date(activeEndTime).getTime();
-
-                    if (!isNaN(endMs) && endMs > nowMs) {
-                        document.getElementById('clientFormCard')?.classList.add('hidden');
-                        document.getElementById('mainHeader')?.classList.add('hidden');
-                        
-                        document.getElementById('clientMiniBarTimer')?.classList.remove('hidden');
-                        document.getElementById('clientWorkspaceMessage')?.classList.remove('hidden');
-
-                        document.getElementById('miniActivePcNo').innerText = pcData.pcNo;
-                        document.getElementById('miniActiveStudentName').innerText = pcData.studentName;
-                        document.getElementById('miniActiveStudentDetails').innerText = pcData.studentClass + ' • ' + pcData.purpose;
-
-                        startClientTimer(currentClientPc, activeEndTime);
-                    } else {
-                        localStorage.removeItem('active_pc_session');
-                    }
-                } catch(e) {
-                    localStorage.removeItem('active_pc_session');
+            // 1. Semak status terkini PC dari Supabase
+            if (db) {
+                const { data } = await db.from('pc_sessions').select('*').eq('id', currentClientPc).single();
+                
+                // Jika Supabase menunjukkan status BUKAN ACTIVE (cth: AVAILABLE/EXPIRED selepas Shutdown),
+                // cuci memori tempatan dan paparkan borang pendaftaran baharu!
+                if (data && data.status !== 'ACTIVE') {
+                    resetClientScreenLocally();
+                    return;
                 }
             }
-        }
 
-        window.onload = async function() {
-            checkAdminAuthOnLoad();
-            loadSavedTheme();
-            loadLocalSchoolConfig();
+            // 2. Jika di Supabase masih ACTIVE, teruskan semakan baki masa
+            let activeEndTime = pcData.endTime;
+            if (pcSessions[currentClientPc] && pcSessions[currentClientPc].endTime) {
+                activeEndTime = pcSessions[currentClientPc].endTime;
+            }
 
-            await fetchInitialSupabaseData();
-            await fetchLogsFromSupabase();
-            await fetchInitialChatMessages();
+            const nowMs = Date.now();
+            const endMs = new Date(activeEndTime).getTime();
 
-            const savedView = localStorage.getItem('active_app_view');
-            const urlParams = new URLSearchParams(window.location.search);
-            const viewParam = urlParams.get('view');
+            if (!isNaN(endMs) && endMs > nowMs) {
+                document.getElementById('clientFormCard')?.classList.add('hidden');
+                document.getElementById('mainHeader')?.classList.add('hidden');
+                
+                document.getElementById('clientMiniBarTimer')?.classList.remove('hidden');
+                document.getElementById('clientWorkspaceMessage')?.classList.remove('hidden');
 
-            if ((viewParam === 'admin' || savedView === 'admin') && isAdminLoggedIn) {
-                switchView('admin');
+                document.getElementById('miniActivePcNo').innerText = pcData.pcNo;
+                document.getElementById('miniActiveStudentName').innerText = pcData.studentName;
+                document.getElementById('miniActiveStudentDetails').innerText = pcData.studentClass + ' • ' + pcData.purpose;
+
+                startClientTimer(currentClientPc, activeEndTime);
             } else {
-                switchView('client');
+                resetClientScreenLocally();
             }
+        } catch(e) {
+            resetClientScreenLocally();
+        }
+    }
+}
 
-            const autoPc = urlParams.get('pc');
-            if (autoPc) {
-                const pcSelect = document.getElementById('clientPcNo');
-                if (pcSelect) {
-                    pcSelect.value = autoPc.toUpperCase();
-                }
-            }
+       window.onload = async function() {
+    checkAdminAuthOnLoad();
+    loadSavedTheme();
+    loadLocalSchoolConfig();
 
-            checkActiveSessionOnLoad();
-            setupRealtimeListener();
-            setupChatRealtimeListener();
-        };
+    // 1. Ambil data asas dari Supabase
+    await fetchInitialSupabaseData();
+    await fetchLogsFromSupabase();
+    await fetchInitialChatMessages();
+
+    // 2. Tentukan paparan (Admin atau Client)
+    const savedView = localStorage.getItem('active_app_view');
+    const urlParams = new URLSearchParams(window.location.search);
+    const viewParam = urlParams.get('view');
+
+    if ((viewParam === 'admin' || savedView === 'admin') && isAdminLoggedIn) {
+        switchView('admin');
+    } else {
+        switchView('client');
+    }
+
+    // 3. Setkan nombor PC automatik jika ada parameter di URL (cth: ?pc=PC-10)
+    const autoPc = urlParams.get('pc');
+    if (autoPc) {
+        const pcSelect = document.getElementById('clientPcNo');
+        if (pcSelect) {
+            pcSelect.value = autoPc.toUpperCase();
+        }
+    }
+
+    // 4. Semak sesi aktif di Client (Akan semak terus ke Supabase dulu)
+    await checkActiveSessionOnLoad();
+
+    // 5. Aktifkan listener real-time
+    setupRealtimeListener();
+    setupChatRealtimeListener();
+};
 
       setInterval(() => {
     let now = new Date();
