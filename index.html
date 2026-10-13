@@ -2668,8 +2668,12 @@ function checkAnswer(selectedCode) {
     }
 }
 
-// Variable Global Untuk Menyimpan Soalan Siaran Admin
-let customAdminQuiz = null;
+// ==========================================
+// 🧩 PENGURUSAN KUIZ HARIAN (ADMIN & CLIENT)
+// ==========================================
+
+// Semak jika ada soalan kustom yang tersimpan di localStorage
+let customAdminQuiz = JSON.parse(localStorage.getItem('ePusatAkses_CustomQuiz')) || null;
 
 // 1. FUNGSI GURU MENYIARKAN SOALAN DARI ADMIN FORM
 function publishCustomQuiz(event) {
@@ -2695,86 +2699,105 @@ function publishCustomQuiz(event) {
         answer: correct
     };
 
-    // A. Simpan di Admin tempatan
+    // A. Simpan ke pembolehubah global & localStorage
     customAdminQuiz = quizPayload;
+    localStorage.setItem('ePusatAkses_CustomQuiz', JSON.stringify(quizPayload));
 
-    // B. Kemaskini paparan Client serta-merta (jika dikuasai dalam tab/sistem sama)
+    // B. Kemaskini paparan Client serta-merta
     loadRandomQuiz();
 
-    // C. HANTAR VIA SUPABASE CHANNEL (ke PC Client lain)
-    if (typeof pc_sessions_channel !== 'undefined' && pc_sessions_channel) {
-        pc_sessions_channel.send({
-            type: 'broadcast',
-            event: 'NEW_QUIZ_PUBLISHED',
-            payload: quizPayload
-        });
+    // C. HANTAR VIA SUPABASE CHANNEL (jika ada sambungan)
+    try {
+        if (typeof pc_sessions_channel !== 'undefined' && pc_sessions_channel) {
+            pc_sessions_channel.send({
+                type: 'broadcast',
+                event: 'NEW_QUIZ_PUBLISHED',
+                payload: quizPayload
+            });
+        }
+    } catch (err) {
+        console.log("Supabase broadcast offline, menggunakan localStorage fallback.");
     }
 
     // D. Kemaskini tag status Admin
-    const statusTag = document.getElementById('activeQuizStatusTag');
-    if(statusTag) {
-        statusTag.className = "text-xs font-black px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/30";
-        statusTag.innerText = "Status: Soalan Kustom Disiarkan 🚀";
-    }
+    updateQuizStatusTag(true);
 
-    alert("🎉 Soalan Harian berjaya disiarkan! Buka kad Kuiz Harian di Client untuk lihat hasilnya.");
+    alert("🎉 Soalan Harian berjaya disiarkan! Tekan butang 'Kuiz Harian' pada Client untuk melihatnya.");
 }
 
 // 2. TETAP SEMULA KE BANK SOALAN RAWAK
 function resetToDefaultQuiz() {
     customAdminQuiz = null;
-    document.getElementById('adminQuizForm').reset();
+    localStorage.removeItem('ePusatAkses_CustomQuiz');
+    
+    if(document.getElementById('adminQuizForm')) {
+        document.getElementById('adminQuizForm').reset();
+    }
 
-    // Kemaskini paparan Client semula
     loadRandomQuiz();
 
-    // Hantar isyarat reset ke Supabase Channel
-    if (typeof pc_sessions_channel !== 'undefined' && pc_sessions_channel) {
-        pc_sessions_channel.send({
-            type: 'broadcast',
-            event: 'RESET_QUIZ_DEFAULT'
-        });
-    }
+    try {
+        if (typeof pc_sessions_channel !== 'undefined' && pc_sessions_channel) {
+            pc_sessions_channel.send({
+                type: 'broadcast',
+                event: 'RESET_QUIZ_DEFAULT'
+            });
+        }
+    } catch (err) {}
 
-    const statusTag = document.getElementById('activeQuizStatusTag');
-    if(statusTag) {
-        statusTag.className = "text-xs font-black px-3 py-1 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/30";
-        statusTag.innerText = "Status: Soalan Lalai (Default)";
-    }
-
+    updateQuizStatusTag(false);
     alert("Sistem dikembalikan kepada Bank Soalan Rawak.");
 }
 
-// 3. FUNGSI AKTIFKAN LISTENERS REALTIME (DIPANGGIL APABILA SUPABASE READY)
-function setupQuizRealtimeListeners() {
+// Kemaskini Tag Status di Admin
+function updateQuizStatusTag(isCustom) {
+    const statusTag = document.getElementById('activeQuizStatusTag');
+    if(statusTag) {
+        if(isCustom) {
+            statusTag.className = "text-xs font-black px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/30";
+            statusTag.innerText = "Status: Soalan Kustom Disiarkan 🚀";
+        } else {
+            statusTag.className = "text-xs font-black px-3 py-1 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/30";
+            statusTag.innerText = "Status: Soalan Lalai (Default)";
+        }
+    }
+}
+
+// 3. LISTENERS SUPABASE
+function initQuizRealtime() {
     if (typeof pc_sessions_channel !== 'undefined' && pc_sessions_channel) {
         pc_sessions_channel.on('broadcast', { event: 'NEW_QUIZ_PUBLISHED' }, payload => {
             if (payload && payload.payload) {
                 customAdminQuiz = payload.payload;
+                localStorage.setItem('ePusatAkses_CustomQuiz', JSON.stringify(customAdminQuiz));
                 loadRandomQuiz();
             }
         });
 
         pc_sessions_channel.on('broadcast', { event: 'RESET_QUIZ_DEFAULT' }, () => {
             customAdminQuiz = null;
+            localStorage.removeItem('ePusatAkses_CustomQuiz');
             loadRandomQuiz();
         });
     }
 }
+setTimeout(initQuizRealtime, 2000);
 
-// Jalankan pendengar sebaik sahaja skrip disedia
-setTimeout(setupQuizRealtimeListeners, 1500);
-
-// 4. FUNGSI PAPAR SOALAN DI CLIENT (UTAMAKAN SOALAN ADMIN)
+// 4. FUNGSI PAPAR SOALAN DI CLIENT
 function loadRandomQuiz() {
     const feedback = document.getElementById('quizFeedback');
     if (feedback) feedback.classList.add('hidden');
 
-    // Jika Guru ada siar soalan kustom dari Admin, guna soalan kustom tersebut
+    // Semak sekali lagi dari localStorage jika customAdminQuiz kosong
+    if (!customAdminQuiz) {
+        const saved = localStorage.getItem('ePusatAkses_CustomQuiz');
+        if (saved) customAdminQuiz = JSON.parse(saved);
+    }
+
+    // Utamakan Soalan Admin Jika Ada
     if (customAdminQuiz) {
         currentQuiz = customAdminQuiz;
     } else {
-        // Jika tiada, pilih rawak dari bank soalan
         const randomIndex = Math.floor(Math.random() * quizBank.length);
         currentQuiz = quizBank[randomIndex];
     }
@@ -2800,7 +2823,6 @@ function loadRandomQuiz() {
         `;
     }).join('');
 }
-
     </script>
 </body>
 </html>
