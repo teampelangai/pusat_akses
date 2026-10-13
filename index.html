@@ -555,76 +555,84 @@
     </div>
 </div>
 
-            <!-- PUSAT KAWALAN CHAT LIVE ADMIN -->
-            <div class="custom-card border rounded-2xl p-6 shadow-xl mt-8">
-                <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
-                    <div>
-                        <h3 class="text-lg font-extrabold flex items-center gap-2">
-                            <i class="fa-solid fa-comments text-indigo-600 dark:text-indigo-400"></i> Live Chat Hub (Pusat Kawalan Mesej)
-                        </h3>
-                        <p class="text-xs opacity-70 mt-0.5">Komunikasi Real-time Antara Murid & Guru Pusat Akses</p>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <label class="flex items-center gap-2 text-xs font-bold cursor-pointer">
-                            <input type="checkbox" id="adminChatToggle" onchange="toggleAdminChatStatus()" checked class="w-4 h-4 accent-indigo-600">
-                            Status Chat: <span id="adminChatStatusText" class="text-emerald-500 font-extrabold">Aktif</span>
-                        </label>
-                    </div>
-                </div>
+         <!-- PUSAT KAWALAN CHAT LIVE ADMIN -->
+<div class="custom-card border rounded-2xl p-6 shadow-xl mt-8">
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+        <div>
+            <h3 class="text-lg font-extrabold flex items-center gap-2">
+                <i class="fa-solid fa-comments text-indigo-600 dark:text-indigo-400"></i> Live Chat Hub (Pusat Kawalan Mesej)
+            </h3>
+            <p class="text-xs opacity-70 mt-0.5">Komunikasi Real-time Antara Murid & Guru Pusat Akses</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <label class="flex items-center gap-2 text-xs font-bold cursor-pointer">
+                <input type="checkbox" id="adminChatToggle" onchange="toggleAdminChatStatus()" checked class="w-4 h-4 accent-indigo-600">
+                Status Chat: <span id="adminChatStatusText" class="text-emerald-500 font-extrabold">Aktif</span>
+            </label>
+        </div>
+    </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    <div class="lg:col-span-2 custom-subcard border rounded-xl p-4 flex flex-col h-[320px]">
-                        <div id="adminChatMessages" class="flex-1 overflow-y-auto space-y-2 text-xs custom-scrollbar pr-2">
-                            <!-- CHAT MESSAGES HERE -->
-                        </div>
-                        <form id="adminChatForm" onsubmit="sendAdminMessage(event)" class="mt-3 pt-3 border-t border-slate-700 flex items-center gap-2">
-                            <select id="adminChatTarget" class="custom-subcard text-xs border rounded-lg p-2 outline-none font-bold">
-                                <option value="ALL">📢 Broadcast (Semua PC)</option>
-                                <option value="PC-01">PC-01</option>
-                                <option value="PC-02">PC-02</option>
-                                <option value="PC-03">PC-03</option>
-                                <option value="PC-04">PC-04</option>
-                                <option value="PC-05">PC-05</option>
-                                <option value="PC-06">PC-06</option>
-                                <option value="PC-07">PC-07</option>
-                                <option value="PC-08">PC-08</option>
-                                <option value="PC-09">PC-09</option>
-                                <option value="PC-10">PC-10</option>
-                                <option value="PC-11">PC-11</option>
-                                <option value="PC-12">PC-12</option>
-                                <option value="PC-13">PC-13</option>
-                                <option value="PC-14">PC-14</option>
-                                <option value="PC-15">PC-15</option>
-                                <option value="PC-16">PC-16</option>
-                                <option value="PC-17">PC-17</option>
-                                <option value="PC-18">PC-18</option>
-                                <option value="PC-19">PC-19</option>
-                                <option value="PC-20">PC-20</option>
-                            </select>
-                            <input type="text" id="adminChatInput" required placeholder="Taip Mesej Guru / Pengumuman..." class="flex-1 custom-subcard border text-xs rounded-lg px-3 py-2 outline-none focus:border-indigo-500">
-                            <button type="button" onclick="sendBuzz('ADMIN')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs px-3 py-2 rounded-lg transition flex items-center gap-1">
-                                🔔 BUZZ!
-                            </button>
-                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2 rounded-lg transition flex items-center gap-1.5">
-                                <i class="fa-solid fa-paper-plane"></i> Hantar
-                            </button>
-                        </form>
-                    </div>
-
-                    <div class="custom-subcard border rounded-xl p-4 flex flex-col justify-between">
-                        <div>
-                            <h4 class="text-xs font-black uppercase mb-2 text-indigo-600 dark:text-indigo-400">Panduan Guru & Kawalan</h4>
-                            <p class="text-xs font-medium leading-relaxed mb-3 opacity-90">
-                                Gunakan fungsi chat ini untuk memberi arahan pantas, membantu murid yang mengalami masalah teknikal, atau mengumumkan baki masa pendaftaran.
-                            </p>
-                        </div>
-                        <button type="button" onclick="clearAllChatMessages()" class="w-full custom-card hover:bg-rose-600/20 hover:text-rose-500 border border-slate-700 text-xs font-bold py-2 rounded-lg transition">
-                            <i class="fa-solid fa-trash"></i> Padam Semua Rekod Chat
-                        </button>
-                    </div>
-                </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <!-- KOTAK CHAT UTAMA (KIRI) -->
+        <div class="lg:col-span-2 custom-subcard border rounded-xl p-4 flex flex-col h-[320px]">
+            <div id="adminChatMessages" class="flex-1 overflow-y-auto space-y-2 text-xs custom-scrollbar pr-2">
+                <!-- CHAT MESSAGES HERE -->
             </div>
+            
+            <!-- BORANG CHAT ADMIN RESPONSIF -->
+            <form id="adminChatForm" onsubmit="sendAdminMessage(event)" class="mt-3 pt-3 border-t border-slate-700 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <select id="adminChatTarget" class="custom-subcard text-xs border rounded-lg p-2 outline-none font-bold flex-1 sm:flex-none">
+                        <option value="ALL">📢 Broadcast (Semua PC)</option>
+                        <option value="PC-01">PC-01</option>
+                        <option value="PC-02">PC-02</option>
+                        <option value="PC-03">PC-03</option>
+                        <option value="PC-04">PC-04</option>
+                        <option value="PC-05">PC-05</option>
+                        <option value="PC-06">PC-06</option>
+                        <option value="PC-07">PC-07</option>
+                        <option value="PC-08">PC-08</option>
+                        <option value="PC-09">PC-09</option>
+                        <option value="PC-10">PC-10</option>
+                        <option value="PC-11">PC-11</option>
+                        <option value="PC-12">PC-12</option>
+                        <option value="PC-13">PC-13</option>
+                        <option value="PC-14">PC-14</option>
+                        <option value="PC-15">PC-15</option>
+                        <option value="PC-16">PC-16</option>
+                        <option value="PC-17">PC-17</option>
+                        <option value="PC-18">PC-18</option>
+                        <option value="PC-19">PC-19</option>
+                        <option value="PC-20">PC-20</option>
+                    </select>
+                    <button type="button" onclick="sendBuzz('ADMIN')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs px-3 py-2 rounded-lg transition flex items-center justify-center gap-1 shrink-0">
+                        🔔 BUZZ!
+                    </button>
+                </div>
 
+                <div class="flex items-center gap-2 w-full flex-1">
+                    <input type="text" id="adminChatInput" required placeholder="Taip Mesej Guru / Pengumuman..." class="w-full flex-1 custom-subcard border text-xs rounded-lg px-3 py-2 outline-none focus:border-indigo-500 min-w-0">
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2 rounded-lg transition flex items-center justify-center gap-1.5 shrink-0">
+                        <i class="fa-solid fa-paper-plane"></i> Hantar
+                    </button>
+                </div>
+            </form>
+        </div> <!-- 👈 TAG DIV PENUTUP KOTAK CHAT UTAMA YANG TERTINGGAL TADI -->
+
+        <!-- KOTAK PANDUAN GURU (KANAN) -->
+        <div class="custom-subcard border rounded-xl p-4 flex flex-col justify-between">
+            <div>
+                <h4 class="text-xs font-black uppercase mb-2 text-indigo-600 dark:text-indigo-400">Panduan Guru & Kawalan</h4>
+                <p class="text-xs font-medium leading-relaxed mb-3 opacity-90">
+                    Gunakan fungsi chat ini untuk memberi arahan pantas, membantu murid yang mengalami masalah teknikal, atau mengumumkan baki masa pendaftaran.
+                </p>
+            </div>
+            <button type="button" onclick="clearAllChatMessages()" class="w-full custom-card hover:bg-rose-600/20 hover:text-rose-500 border border-slate-700 text-xs font-bold py-2 rounded-lg transition">
+                <i class="fa-solid fa-trash"></i> Padam Semua Rekod Chat
+            </button>
+        </div>
+    </div>
+</div> 
             <!-- BAHAGIAN JADUAL LOG PENGGUNAAN KOMPUTER -->
             <div class="custom-card border rounded-2xl p-6 shadow-xl mt-8">
                 <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
