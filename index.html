@@ -1752,92 +1752,105 @@
             }
         }
 
-        function renderAdminGrid() {
-            const grid = document.getElementById('adminGrid');
-            if(!grid) return;
+      function renderAdminGrid() {
+    const grid = document.getElementById('adminGrid');
+    if(!grid) return;
 
-            grid.innerHTML = '';
+    grid.innerHTML = '';
 
-            let availCount = 0;
-            let activeCount = 0;
-            let expiredCount = 0;
+    let availCount = 0;
+    let activeCount = 0;
+    let expiredCount = 0;
 
-            const limit = schoolConfig.pcLimit || 20;
+    const limit = schoolConfig.pcLimit || 20;
 
-            for(let i=1; i<=limit; i++) {
-                let pcNo = "PC-" + (i < 10 ? '0' + i : i);
-                let pc = pcSessions[pcNo] || { status: 'AVAILABLE', studentName: '', studentClass: '', purpose: '', remainingSeconds: 0 };
-                
-                let cardColor = "custom-card border";
-                let badge = '<span class="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">KOSONG</span>';
-                
-                if(pc.status === 'AVAILABLE') availCount++;
-                if(pc.status === 'ACTIVE') {
-                    activeCount++;
-                    cardColor = "border-indigo-500/50 custom-card ring-1 ring-indigo-500/30";
-                    badge = '<span class="bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">AKTIF</span>';
-                }
-                if(pc.status === 'EXPIRED') {
-                    expiredCount++;
-                    cardColor = "border-rose-500 bg-rose-950/30 ring-2 ring-rose-500 animate-pulse";
-                    badge = '<span class="bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full">MASA TAMAT</span>';
-                }
+    for(let i=1; i<=limit; i++) {
+        let pcNo = "PC-" + (i < 10 ? '0' + i : i);
+        let pc = pcSessions[pcNo] || { status: 'AVAILABLE', studentName: '', studentClass: '', purpose: '', remainingSeconds: 0 };
+        
+        // 🔽 [KOD BAHARU] Kira baki masa terus dari waktu sasaran (endTime)
+        if (pc.status === 'ACTIVE' && pc.endTime) {
+            let now = new Date();
+            let end = new Date(pc.endTime);
+            let diffSeconds = Math.max(0, Math.floor((end - now) / 1000));
+            
+            pc.remainingSeconds = diffSeconds;
 
-                let mins = Math.floor((pc.remainingSeconds || 0) / 60);
-                let secs = (pc.remainingSeconds || 0) % 60;
-                let timerText = (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
-
-                let infoHTML = '';
-                if(pc.status === 'ACTIVE' || pc.status === 'EXPIRED') {
-                    infoHTML = '<div class="space-y-1 mb-3">' +
-                                '<h5 class="text-xs font-bold truncate">' + (pc.studentName || 'Murid') + '</h5>' +
-                                '<p class="text-[11px] opacity-70 font-medium">' + (pc.studentClass || '-') + ' • ' + (pc.purpose || '-') + '</p>' +
-                                '<div class="text-lg font-black font-mono text-indigo-600 dark:text-indigo-400 mt-2">' + timerText + '</div>' +
-                               '</div>';
-                } else {
-                    infoHTML = '<div class="py-4 text-center text-xs opacity-50 font-medium">Sedia Digunakan</div>';
-                }
-
-                let extraActionBtn = pc.status === 'ACTIVE' 
-                    ? '<button type="button" onclick="addExtraMinutesAdmin(\'' + pcNo + '\', 15)" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 text-xs font-bold py-1.5 px-2 rounded-lg transition shrink-0" title="Tambah 15 Minit">+15m</button>' 
-                    : '';
-
-                let cardHTML = '<div class="rounded-2xl p-4 flex flex-col justify-between transition-all ' + cardColor + '">' +
-                                '<div>' +
-                                    '<div class="flex items-center justify-between mb-3">' +
-                                        '<span class="font-extrabold text-sm flex items-center gap-2">' +
-                                            '<i class="fa-solid fa-desktop opacity-50"></i> ' + pcNo +
-                                        '</span>' +
-                                        badge +
-                                    '</div>' +
-                                    infoHTML +
-                                '</div>' +
-                                '<div class="pt-2 border-t border-slate-700/50 flex flex-col gap-1.5 mt-2">' +
-                                    '<div class="flex items-center gap-1.5">' +
-                                        '<button type="button" onclick="stopAdminSession(\'' + pcNo + '\')" class="w-full custom-subcard hover:bg-slate-700/20 text-[11px] font-bold py-1.5 rounded-lg transition">Reset Web</button>' +
-                                        extraActionBtn +
-                                    '</div>' +
-                                    '<!-- BUTANG KAWALAN FIZIKAL SYSTEM -->' +
-                                    '<div class="grid grid-cols-2 gap-1 pt-1 border-t border-slate-800/80">' +
-                                        '<button type="button" onclick="sendSystemCommand(\'' + pcNo + '\', \'SHUTDOWN\')" class="bg-rose-600/20 hover:bg-rose-600/40 text-rose-400 border border-rose-500/30 text-[10px] font-black py-1 px-1.5 rounded-md transition flex items-center justify-center gap-1" title="Shutdown OS Windows Fizikal">' +
-                                            '<i class="fa-solid fa-power-off"></i> Off' +
-                                        '</button>' +
-                                        '<button type="button" onclick="sendSystemCommand(\'' + pcNo + '\', \'RESTART\')" class="bg-amber-600/20 hover:bg-amber-600/40 text-amber-400 border border-amber-500/30 text-[10px] font-black py-1 px-1.5 rounded-md transition flex items-center justify-center gap-1" title="Restart OS Windows Fizikal">' +
-                                            '<i class="fa-solid fa-rotate-right"></i> Reboot' +
-                                        '</button>' +
-                                    '</div>' +
-                                '</div>' +
-                               '</div>';
-
-                grid.innerHTML += cardHTML;
+            if (diffSeconds === 0) {
+                pc.status = 'EXPIRED';
             }
+        }
+        // 🔼 [TAMAT KOD BAHARU]
 
-            document.getElementById('statAvailable').innerText = availCount;
-            document.getElementById('statActive').innerText = activeCount;
-            document.getElementById('statExpired').innerText = expiredCount;
-            document.getElementById('statTotalToday').innerText = usageHistory.length;
+        let cardColor = "custom-card border";
+        let badge = '<span class="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">KOSONG</span>';
+        
+        if(pc.status === 'AVAILABLE') availCount++;
+        if(pc.status === 'ACTIVE') {
+            activeCount++;
+            cardColor = "border-indigo-500/50 custom-card ring-1 ring-indigo-500/30";
+            badge = '<span class="bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">AKTIF</span>';
+        }
+        if(pc.status === 'EXPIRED') {
+            expiredCount++;
+            cardColor = "border-rose-500 bg-rose-950/30 ring-2 ring-rose-500 animate-pulse";
+            badge = '<span class="bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full">MASA TAMAT</span>';
         }
 
+        let mins = Math.floor((pc.remainingSeconds || 0) / 60);
+        let secs = (pc.remainingSeconds || 0) % 60;
+        let timerText = (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
+
+        let infoHTML = '';
+        if(pc.status === 'ACTIVE' || pc.status === 'EXPIRED') {
+            infoHTML = '<div class="space-y-1 mb-3">' +
+                        '<h5 class="text-xs font-bold truncate">' + (pc.studentName || 'Murid') + '</h5>' +
+                        '<p class="text-[11px] opacity-70 font-medium">' + (pc.studentClass || '-') + ' • ' + (pc.purpose || '-') + '</p>' +
+                        '<div class="text-lg font-black font-mono text-indigo-600 dark:text-indigo-400 mt-2">' + timerText + '</div>' +
+                       '</div>';
+        } else {
+            infoHTML = '<div class="py-4 text-center text-xs opacity-50 font-medium">Sedia Digunakan</div>';
+        }
+
+        let extraActionBtn = pc.status === 'ACTIVE' 
+            ? '<button type="button" onclick="addExtraMinutesAdmin(\'' + pcNo + '\', 15)" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 text-xs font-bold py-1.5 px-2 rounded-lg transition shrink-0" title="Tambah 15 Minit">+15m</button>' 
+            : '';
+
+        let cardHTML = '<div class="rounded-2xl p-4 flex flex-col justify-between transition-all ' + cardColor + '">' +
+                        '<div>' +
+                            '<div class="flex items-center justify-between mb-3">' +
+                                '<span class="font-extrabold text-sm flex items-center gap-2">' +
+                                    '<i class="fa-solid fa-desktop opacity-50"></i> ' + pcNo +
+                                '</span>' +
+                                badge +
+                            '</div>' +
+                            infoHTML +
+                        '</div>' +
+                        '<div class="pt-2 border-t border-slate-700/50 flex flex-col gap-1.5 mt-2">' +
+                            '<div class="flex items-center gap-1.5">' +
+                                '<button type="button" onclick="stopAdminSession(\'' + pcNo + '\')" class="w-full custom-subcard hover:bg-slate-700/20 text-[11px] font-bold py-1.5 rounded-lg transition">Reset Web</button>' +
+                                extraActionBtn +
+                            '</div>' +
+                            '<!-- BUTANG KAWALAN FIZIKAL SYSTEM -->' +
+                            '<div class="grid grid-cols-2 gap-1 pt-1 border-t border-slate-800/80">' +
+                                '<button type="button" onclick="sendSystemCommand(\'' + pcNo + '\', \'SHUTDOWN\')" class="bg-rose-600/20 hover:bg-rose-600/40 text-rose-400 border border-rose-500/30 text-[10px] font-black py-1 px-1.5 rounded-md transition flex items-center justify-center gap-1" title="Shutdown OS Windows Fizikal">' +
+                                    '<i class="fa-solid fa-power-off"></i> Off' +
+                                '</button>' +
+                                '<button type="button" onclick="sendSystemCommand(\'' + pcNo + '\', \'RESTART\')" class="bg-amber-600/20 hover:bg-amber-600/40 text-amber-400 border border-amber-500/30 text-[10px] font-black py-1 px-1.5 rounded-md transition flex items-center justify-center gap-1" title="Restart OS Windows Fizikal">' +
+                                    '<i class="fa-solid fa-rotate-right"></i> Reboot' +
+                                '</button>' +
+                            '</div>' +
+                        '</div>' +
+                       '</div>';
+
+        grid.innerHTML += cardHTML;
+    }
+
+    document.getElementById('statAvailable').innerText = availCount;
+    document.getElementById('statActive').innerText = activeCount;
+    document.getElementById('statExpired').innerText = expiredCount;
+    document.getElementById('statTotalToday').innerText = usageHistory.length;
+}
         function renderLogTable() {
             const tableBody = document.getElementById('logTableBody');
             if(!tableBody) return;
@@ -2290,19 +2303,30 @@
             setupChatRealtimeListener();
         };
 
-        setInterval(() => {
-            Object.keys(pcSessions).forEach(id => {
-                if(pcSessions[id].status === 'ACTIVE' && pcSessions[id].remainingSeconds > 0) {
-                    pcSessions[id].remainingSeconds--;
-                    if(pcSessions[id].remainingSeconds === 0) {
-                        pcSessions[id].status = 'EXPIRED';
-                        const exactEndTimeStr = new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
-                        recordActualEndTime(id, exactEndTimeStr);
-                    }
-                }
-            });
-            renderAdminGrid();
-        }, 1000);
+      setInterval(() => {
+    let now = new Date();
+    Object.keys(pcSessions).forEach(id => {
+        let pc = pcSessions[id];
+        if(pc.status === 'ACTIVE' && pc.endTime) {
+            // Kira baki masa secara dinamik dari endTime
+            let end = new Date(pc.endTime);
+            let diffSeconds = Math.max(0, Math.floor((end - now) / 1000));
+            pc.remainingSeconds = diffSeconds;
+
+            if(diffSeconds === 0) {
+                pc.status = 'EXPIRED';
+                const exactEndTimeStr = now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
+                recordActualEndTime(id, exactEndTimeStr);
+            }
+        }
+    });
+
+    // Kemaskini paparan grid jika Admin sedang dibuka
+    const adminSec = document.getElementById('view-admin');
+    if (adminSec && !adminSec.classList.contains('hidden')) {
+        renderAdminGrid();
+    }
+}, 1000);
     </script>
 </body>
 </html>
