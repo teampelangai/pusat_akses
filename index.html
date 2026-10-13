@@ -514,39 +514,46 @@
                 </div>
             </div>
 
-            <!-- SKRIN GRID PC LIVE -->
-            <div>
-                <div class="flex flex-wrap items-center justify-between gap-4 custom-card border p-4 rounded-2xl mb-4">
-                    <div>
-                        <h2 id="liveStatusTitle" class="text-lg font-black">Status Live 20 PC Pusat Akses</h2>
-                        <p class="text-xs opacity-70"><span class="displaySchoolName">e-PusatAkses Sekolah</span> • <span class="displaySchoolCode">KOD</span></p>
-                    </div>
-                    <div class="flex flex-wrap items-center gap-3">
-                        <div class="flex items-center gap-2 custom-subcard border px-3 py-1.5 rounded-xl">
-                            <label for="selectPcCount" class="text-xs font-extrabold text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
-                                <i class="fa-solid fa-sliders"></i> Bilangan PC:
-                            </label>
-                            <select id="selectPcCount" onchange="changePcCount(this.value)" class="custom-subcard font-extrabold text-xs rounded-lg px-2 py-1 outline-none border focus:border-indigo-500 cursor-pointer">
-                                <option value="10">10 PC</option>
-                                <option value="20" selected>20 PC</option>
-                            </select>
-                        </div>
-
-                        <!-- BUTANG SHUTDOWN ALL -->
-                        <button type="button" onclick="sendSystemCommand('ALL', 'SHUTDOWN')" class="bg-rose-700 hover:bg-rose-600 text-white font-extrabold text-xs py-2 px-3 rounded-xl transition flex items-center gap-2 shadow-lg">
-                            <i class="fa-solid fa-power-off"></i> 🔴 Shutdown Semua PC
-                        </button>
-
-                        <button type="button" onclick="resetAllSessions()" class="bg-rose-600/20 hover:bg-rose-600/30 text-rose-600 dark:text-rose-400 border border-rose-500/30 font-bold text-xs py-2 px-3 rounded-xl transition flex items-center gap-2">
-                            <i class="fa-solid fa-rotate-right"></i> Reset Web Sesi
-                        </button>
-                    </div>
-                </div>
-
-                <div id="adminGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                    <!-- GRID CARDS -->
-                </div>
+           <!-- SKRIN GRID PC LIVE -->
+<div>
+    <div class="flex flex-wrap items-center justify-between gap-4 custom-card border p-4 rounded-2xl mb-4">
+        <div>
+            <h2 id="liveStatusTitle" class="text-lg font-black">Status Live 20 PC Pusat Akses</h2>
+            <p class="text-xs opacity-70"><span class="displaySchoolName">e-PusatAkses Sekolah</span> • <span class="displaySchoolCode">KOD</span></p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+            <div class="flex items-center gap-2 custom-subcard border px-3 py-1.5 rounded-xl">
+                <label for="selectPcCount" class="text-xs font-extrabold text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
+                    <i class="fa-solid fa-sliders"></i> Bilangan PC:
+                </label>
+                <select id="selectPcCount" onchange="changePcCount(this.value)" class="custom-subcard font-extrabold text-xs rounded-lg px-2 py-1 outline-none border focus:border-indigo-500 cursor-pointer">
+                    <option value="10">10 PC</option>
+                    <option value="20" selected>20 PC</option>
+                </select>
             </div>
+
+            <!-- BUTANG SHUTDOWN ALL -->
+            <button type="button" onclick="sendSystemCommand('ALL', 'SHUTDOWN')" class="bg-rose-700 hover:bg-rose-600 text-white font-extrabold text-xs py-2 px-3 rounded-xl transition flex items-center gap-2 shadow-lg">
+                <i class="fa-solid fa-power-off"></i> 🔴 Shutdown Semua PC
+            </button>
+
+            <!-- 🔽 [TAMBAH BUTANG REFRESH DI SINI] 🔽 -->
+            <button type="button" onclick="manualRefreshAdminData()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs py-2 px-3 rounded-xl transition flex items-center gap-2 shadow-lg">
+                <i id="refreshBtnIcon" class="fa-solid fa-rotate"></i> 
+                <span id="refreshBtnText">Refresh Data</span>
+            </button>
+            <!-- 🔼 [TAMAT BUTANG REFRESH] 🔼 -->
+
+            <button type="button" onclick="resetAllSessions()" class="bg-rose-600/20 hover:bg-rose-600/30 text-rose-600 dark:text-rose-400 border border-rose-500/30 font-bold text-xs py-2 px-3 rounded-xl transition flex items-center gap-2">
+                <i class="fa-solid fa-rotate-right"></i> Reset Web Sesi
+            </button>
+        </div>
+    </div>
+
+    <div id="adminGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        <!-- GRID CARDS -->
+    </div>
+</div>
 
             <!-- PUSAT KAWALAN CHAT LIVE ADMIN -->
             <div class="custom-card border rounded-2xl p-6 shadow-xl mt-8">
@@ -2085,6 +2092,32 @@
             }
         }
 
+
+async function manualRefreshAdminData() {
+    const btnIcon = document.getElementById('refreshBtnIcon');
+    const refreshText = document.getElementById('refreshBtnText');
+    
+    // Tunjukkan animasi memuatkan (Loading/Spinning)
+    if (btnIcon) btnIcon.classList.add('fa-spin');
+    if (refreshText) refreshText.innerText = 'Memuatkan...';
+
+    try {
+        await fetchInitialSupabaseData();
+        await fetchLogsFromSupabase();
+    } catch (err) {
+        console.error("Gagal refresh data:", err);
+    } finally {
+        // Hentikan animasi memuatkan selepas data selesai dimuat turun
+        setTimeout(() => {
+            if (btnIcon) btnIcon.classList.remove('fa-spin');
+            if (refreshText) refreshText.innerText = 'Refresh Data';
+        }, 500);
+    }
+}
+
+
+
+
         async function fetchInitialSupabaseData() {
             if(!db) return;
             try {
@@ -2150,89 +2183,75 @@
             }
         }
 
-        function setupRealtimeListener() {
-            if(!db) return;
-            try {
-                db.channel('pc_sessions_channel')
-                  .on('postgres_changes', { event: '*', schema: 'public', table: 'pc_sessions' }, payload => {
-                      const item = payload.new;
-                      if (!item) return;
+      function setupRealtimeListener() {
+    if(!db) return;
+    try {
+        db.channel('pc_sessions_channel')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'pc_sessions' }, payload => {
+              const item = payload.new;
+              if (!item) return;
 
-                      if (item.id === 'GLOBAL_CONFIG') {
-                          isChatEnabled = item.status !== 'MUTED';
-                          const toggle = document.getElementById('adminChatToggle');
-                          if (toggle) toggle.checked = isChatEnabled;
-                          document.getElementById('adminChatStatusText').innerText = isChatEnabled ? "Aktif" : "Mute/Tutup";
-                          document.getElementById('adminChatStatusText').className = isChatEnabled ? "text-emerald-500 font-extrabold" : "text-rose-500 font-extrabold";
-                          updateClientChatAvailability();
+              if (item.id === 'GLOBAL_CONFIG') {
+                  isChatEnabled = item.status !== 'MUTED';
+                  const toggle = document.getElementById('adminChatToggle');
+                  if (toggle) toggle.checked = isChatEnabled;
+                  document.getElementById('adminChatStatusText').innerText = isChatEnabled ? "Aktif" : "Mute/Tutup";
+                  document.getElementById('adminChatStatusText').className = isChatEnabled ? "text-emerald-500 font-extrabold" : "text-rose-500 font-extrabold";
+                  updateClientChatAvailability();
 
-                          if (item.student_name && item.student_name.startsWith('{')) {
-                              try {
-                                  schoolConfig = Object.assign(schoolConfig, JSON.parse(item.student_name));
-                                  localStorage.setItem('pusat_akses_school_config', JSON.stringify(schoolConfig));
-                                  initPcSessions();
-                                  updateSchoolUI();
-                              } catch(e){}
-                          }
-                          return;
-                      }
+                  if (item.student_name && item.student_name.startsWith('{')) {
+                      try {
+                          schoolConfig = Object.assign(schoolConfig, JSON.parse(item.student_name));
+                          localStorage.setItem('pusat_akses_school_config', JSON.stringify(schoolConfig));
+                          initPcSessions();
+                          updateSchoolUI();
+                      } catch(e){}
+                  }
+                  return;
+              }
 
-                      if (!pcSessions[item.id]) {
-                          pcSessions[item.id] = { pcNo: item.id, status: 'AVAILABLE', studentName: '', studentClass: '', purpose: '', remainingSeconds: 0 };
-                      }
+              if (!pcSessions[item.id]) {
+                  pcSessions[item.id] = { pcNo: item.id, status: 'AVAILABLE', studentName: '', studentClass: '', purpose: '', remainingSeconds: 0 };
+              }
 
-                      if(pcSessions[item.id]) {
-                          pcSessions[item.id].status = item.status;
-                          pcSessions[item.id].studentName = item.student_name || '';
-                          pcSessions[item.id].studentClass = item.student_class || '';
-                          pcSessions[item.id].purpose = item.purpose || '';
-                          pcSessions[item.id].duration = item.duration || 30;
+              if(pcSessions[item.id]) {
+                  pcSessions[item.id].status = item.status;
+                  pcSessions[item.id].studentName = item.student_name || '';
+                  pcSessions[item.id].studentClass = item.student_class || '';
+                  pcSessions[item.id].purpose = item.purpose || '';
+                  pcSessions[item.id].duration = item.duration || 30;
 
-                          if (item.status === 'AVAILABLE') {
-                              pcSessions[item.id].remainingSeconds = 0;
-                              pcSessions[item.id].studentName = '';
-                              if (currentClientPc === item.id) {
-                                  resetClientScreenLocally();
-                              }
-                          }
-                          
-                          if(item.end_time && item.status === 'ACTIVE') {
-                              let now = new Date();
-                              let end = new Date(item.end_time);
-                              let remaining = Math.floor((end - now) / 1000);
-                              pcSessions[item.id].remainingSeconds = Math.max(0, remaining);
-                              pcSessions[item.id].endTime = end;
+                  if (item.status === 'AVAILABLE') {
+                      pcSessions[item.id].remainingSeconds = 0;
+                      pcSessions[item.id].studentName = '';
+                  }
+                  
+                  if(item.end_time && item.status === 'ACTIVE') {
+                      let now = new Date();
+                      let end = new Date(item.end_time);
+                      let remaining = Math.floor((end - now) / 1000);
+                      pcSessions[item.id].remainingSeconds = Math.max(0, remaining);
+                      pcSessions[item.id].endTime = end;
+                  } else if (item.status === 'EXPIRED' && item.end_time) {
+                      let end = new Date(item.end_time);
+                      const exactEndTimeStr = end.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
+                      recordActualEndTime(item.id, exactEndTimeStr);
+                  }
 
-                              if (currentClientPc === item.id) {
-                                  // Kemaskini localStorage Client supaya tidak hilang apabila di-refresh
-                                  const savedSession = localStorage.getItem('active_pc_session');
-                                  if (savedSession) {
-                                      try {
-                                          let parsed = JSON.parse(savedSession);
-                                          parsed.endTime = item.end_time;
-                                          localStorage.setItem('active_pc_session', JSON.stringify(parsed));
-                                      } catch(e){}
-                                  }
-                                  startClientTimer(item.id, end);
-                              }
-                          } else if (item.status === 'EXPIRED' && item.end_time) {
-                              let end = new Date(item.end_time);
-                              const exactEndTimeStr = end.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
-                              recordActualEndTime(item.id, exactEndTimeStr);
-                          }
-                          renderAdminGrid();
-                      }
-                  }).subscribe();
+                  // 🔽 PAKSA GRID LUKIS SEMULA TERUS PADA TELEFON / PC ADMIN 🔽
+                  renderAdminGrid();
+              }
+          }).subscribe();
 
-                db.channel('usage_logs_channel')
-                  .on('postgres_changes', { event: '*', schema: 'public', table: 'usage_logs' }, () => {
-                      fetchLogsFromSupabase();
-                  }).subscribe();
+        db.channel('usage_logs_channel')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'usage_logs' }, () => {
+              fetchLogsFromSupabase();
+          }).subscribe();
 
-            } catch(err) {
-                console.error("Ralat Realtime Listener:", err);
-            }
-        }
+    } catch(err) {
+        console.error("Ralat Realtime Listener:", err);
+    }
+}
 
         async function checkActiveSessionOnLoad() {
             const savedSession = localStorage.getItem('active_pc_session');
