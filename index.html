@@ -1253,7 +1253,7 @@ async function sendSystemCommand(targetPc, command) {
             }
         }
 
-     function getSortedUsageHistory() {
+    function getSortedUsageHistory() {
     return [...usageHistory].sort((a, b) => {
         // 1. Tukar tarikh format 'DD/MM/YYYY' ke 'YYYY-MM-DD' untuk perbandingan tepat
         let dateA = (a.date || '').split('/').reverse().join('-');
@@ -1264,16 +1264,36 @@ async function sendSystemCommand(targetPc, command) {
             return dateA.localeCompare(dateB); 
         }
 
-        // 2. Jika tarikh sama, susun mengikut Nombor PC (Ascending: PC-01, PC-02...)
-        let numA = parseInt((a.pcNo || '').replace('PC-', ''), 10) || 0;
-        let numB = parseInt((b.pcNo || '').replace('PC-', ''), 10) || 0;
-        if (numA !== numB) {
-            return numA - numB;
+        // 2. JIKA TARIKH SAMA: Susun mengikut MASA MULA dahulu (Awal -> Lewat)
+        let timeA = parseTimeToMinutes(a.startTime);
+        let timeB = parseTimeToMinutes(b.startTime);
+
+        if (timeA !== timeB) {
+            return timeA - timeB;
         }
 
-        // 3. Jika PC sama, susun mengikut Masa Mula
-        return (a.startTime || '').localeCompare(b.startTime || '');
+        // 3. JIKA TARIKH & MASA SAMA: Baru susun mengikut Nombor PC (PC-01, PC-02...)
+        let numA = parseInt((a.pcNo || '').replace('PC-', ''), 10) || 0;
+        let numB = parseInt((b.pcNo || '').replace('PC-', ''), 10) || 0;
+        return numA - numB;
     });
+}
+
+// Fungsi Bantu: Menukarkan teks masa (contoh: "04:45 PTG", "08:43 PTG") kepada minit untuk susunan tepat
+function parseTimeToMinutes(timeStr) {
+    if (!timeStr) return 0;
+    
+    const cleanStr = timeStr.trim().toUpperCase();
+    const isPM = cleanStr.includes('PTG') || cleanStr.includes('MAM') || cleanStr.includes('PM');
+    
+    const parts = cleanStr.replace(/[^0-9:]/g, '').split(':');
+    let hours = parseInt(parts[0], 10) || 0;
+    const minutes = parseInt(parts[1], 10) || 0;
+
+    if (isPM && hours < 12) hours += 12;
+    if (!isPM && hours === 12) hours = 0;
+
+    return (hours * 60) + minutes;
 }
 
         function exportLogToCSV() {
