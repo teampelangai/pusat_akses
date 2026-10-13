@@ -729,27 +729,46 @@
         let toastTimeout = null;
 
         // FUNGSI MENGHANTAR ARAHAN FIZIKAL WINDOWS KE SUPABASE (SHUTDOWN / RESTART)
-        async function sendSystemCommand(targetPc, command) {
-            const actionText = command === 'SHUTDOWN' ? 'MENUTUP' : 'MEMULAKAN SEMULA';
-            const targetText = targetPc === 'ALL' ? 'SEMUA PC' : targetPc;
+       // ✅ KOD BAHARU (Masa terus berhenti & sesi ditamatkan bila Shutdown/Restart):
+async function sendSystemCommand(targetPc, command) {
+    const actionText = command === 'SHUTDOWN' ? 'MENUTUP' : 'MEMULAKAN SEMULA';
+    const targetText = targetPc === 'ALL' ? 'SEMUA PC' : targetPc;
 
-            if (confirm(`Adakah anda pasti untuk ${actionText} fizikal ${targetText}?`)) {
-                if (db) {
-                    try {
-                        await db.from('pc_commands').insert({
-                            target_pc: targetPc,
-                            command: command,
-                            status: 'PENDING'
-                        });
-                        alert(`Arahan ${command} telah dihantar ke ${targetText}!`);
-                    } catch (err) {
-                        alert("Gagal menghantar arahan ke Supabase: " + err.message);
+    if (confirm(`Adakah anda pasti untuk ${actionText} fizikal ${targetText}?`)) {
+        if (db) {
+            try {
+                // 1. Hantar arahan ke ejen Windows PC (pc_commands)
+                await db.from('pc_commands').insert({
+                    target_pc: targetPc,
+                    command: command,
+                    status: 'PENDING'
+                });
+
+                // 2. Jika arahan adalah SHUTDOWN, hentikan pemasa & reset status sesi terus!
+                if (command === 'SHUTDOWN') {
+                    const limit = schoolConfig.pcLimit || 20;
+                    
+                    if (targetPc === 'ALL') {
+                        // Reset semua PC
+                        for (let i = 1; i <= limit; i++) {
+                            let id = "PC-" + (i < 10 ? '0' + i : i);
+                            await stopAdminSession(id);
+                        }
+                    } else {
+                        // Reset PC spesifik sahaja
+                        await stopAdminSession(targetPc);
                     }
-                } else {
-                    alert("Sambungan Supabase tidak aktif.");
                 }
+
+                alert(`Arahan ${command} telah dihantar ke ${targetText}! Sesi pemasa telah dihentikan.`);
+            } catch (err) {
+                alert("Gagal menghantar arahan ke Supabase: " + err.message);
             }
+        } else {
+            alert("Sambungan Supabase tidak aktif.");
         }
+    }
+}
 
         function playBuzzAudio() {
             try {
