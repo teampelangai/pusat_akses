@@ -423,53 +423,95 @@
                 </form>
             </div>
 
-            <!-- WORKSPACE CLIENT DENGAN PAUTAN PANTAAS PEMBELAJARAN -->
-            <div id="clientWorkspaceMessage" class="hidden text-center py-8 px-6 custom-card border rounded-3xl mt-8">
-                <div class="w-16 h-16 bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3">
-                    <i class="fa-solid fa-window-maximize"></i>
+           <!-- WORKSPACE CLIENT DENGAN PAUTAN PANTAS PEMBELAJARAN & KUIZ -->
+<div id="clientWorkspaceMessage" class="hidden text-center py-8 px-6 custom-card border rounded-3xl mt-8">
+    <div class="w-16 h-16 bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3">
+        <i class="fa-solid fa-window-maximize"></i>
+    </div>
+    <h3 class="text-xl font-bold mb-1">Sesi Penggunaan Sedang Aktif</h3>
+    <p class="text-xs opacity-70 max-w-md mx-auto mb-6">
+        Baki masa penggunaan anda sentiasa dipaparkan pada **Mini Bar di bahagian atas skrin**. Tekan pautan pantas di bawah untuk membuka aplikasi pembelajaran pilihan anda.
+    </p>
+
+    <!-- BAHAGIAN PAUTAN PANTAS (QUICK LAUNCH) -->
+    <div class="border-t border-slate-700/50 pt-5 mt-2">
+        <p class="text-xs font-extrabold uppercase tracking-wider text-indigo-400 mb-4 flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-rocket"></i> Pautan Pantas Pembelajaran & Aktiviti
+        </p>
+        
+        <!-- GRID BUTANG (TUKAR KE sm:grid-cols-5 SUPAYA 5 BUTANG SELARI DI SKRIN PC) -->
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            <a href="https://delima.moe-dl.edu.my" target="_blank" rel="noopener noreferrer" class="custom-subcard border hover:border-indigo-500 p-3 rounded-2xl transition hover:scale-105 flex flex-col items-center gap-2 group">
+                <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg font-black group-hover:bg-amber-500 group-hover:text-slate-950 transition">
+                    <i class="fa-solid fa-graduation-cap"></i>
                 </div>
-                <h3 class="text-xl font-bold mb-1">Sesi Penggunaan Sedang Aktif</h3>
-                <p class="text-xs opacity-70 max-w-md mx-auto mb-6">
-                    Baki masa penggunaan anda sentiasa dipaparkan pada **Mini Bar di bahagian atas skrin**. Tekan pautan pantas di bawah untuk membuka aplikasi pembelajaran pilihan anda.
-                </p>
+                <span class="text-xs font-bold">DELIMa KPM</span>
+            </a>
 
-                <!-- BAHAGIAN PAUTAN PANTAAS (QUICK LAUNCH) -->
-                <div class="border-t border-slate-700/50 pt-5 mt-2">
-                    <p class="text-xs font-extrabold uppercase tracking-wider text-indigo-400 mb-4 flex items-center justify-center gap-1.5">
-                        <i class="fa-solid fa-rocket"></i> Pautan Pantas Pembelajaran
-                    </p>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <a href="https://delima.moe-dl.edu.my" target="_blank" rel="noopener noreferrer" class="custom-subcard border hover:border-indigo-500 p-3 rounded-2xl transition hover:scale-105 flex flex-col items-center gap-2 group">
-                            <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg font-black group-hover:bg-amber-500 group-hover:text-slate-950 transition">
-                                <i class="fa-solid fa-graduation-cap"></i>
-                            </div>
-                            <span class="text-xs font-bold">DELIMa KPM</span>
-                        </a>
-
-                        <a href="https://classroom.google.com" target="_blank" rel="noopener noreferrer" class="custom-subcard border hover:border-emerald-500 p-3 rounded-2xl transition hover:scale-105 flex flex-col items-center gap-2 group">
-                            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg font-black group-hover:bg-emerald-500 group-hover:text-slate-950 transition">
-                                <i class="fa-solid fa-chalkboard-user"></i>
-                            </div>
-                            <span class="text-xs font-bold">Classroom</span>
-                        </a>
-
-                        <a href="https://www.canva.com" target="_blank" rel="noopener noreferrer" class="custom-subcard border hover:border-sky-500 p-3 rounded-2xl transition hover:scale-105 flex flex-col items-center gap-2 group">
-                            <div class="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center text-lg font-black group-hover:bg-sky-500 group-hover:text-slate-950 transition">
-                                <i class="fa-solid fa-palette"></i>
-                            </div>
-                            <span class="text-xs font-bold">Canva</span>
-                        </a>
-
-                        <a href="https://kahoot.it" target="_blank" rel="noopener noreferrer" class="custom-subcard border hover:border-purple-500 p-3 rounded-2xl transition hover:scale-105 flex flex-col items-center gap-2 group">
-                            <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center text-lg font-black group-hover:bg-purple-500 group-hover:text-slate-950 transition">
-                                <i class="fa-solid fa-gamepad"></i>
-                            </div>
-                            <span class="text-xs font-bold">Kahoot!</span>
-                        </a>
-                    </div>
+            <a href="https://classroom.google.com" target="_blank" rel="noopener noreferrer" class="custom-subcard border hover:border-emerald-500 p-3 rounded-2xl transition hover:scale-105 flex flex-col items-center gap-2 group">
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg font-black group-hover:bg-emerald-500 group-hover:text-slate-950 transition">
+                    <i class="fa-solid fa-chalkboard-user"></i>
                 </div>
-            </div>
-        </section>
+                <span class="text-xs font-bold">Classroom</span>
+            </a>
+
+            <a href="https://www.canva.com" target="_blank" rel="noopener noreferrer" class="custom-subcard border hover:border-sky-500 p-3 rounded-2xl transition hover:scale-105 flex flex-col items-center gap-2 group">
+                <div class="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center text-lg font-black group-hover:bg-sky-500 group-hover:text-slate-950 transition">
+                    <i class="fa-solid fa-palette"></i>
+                </div>
+                <span class="text-xs font-bold">Canva</span>
+            </a>
+
+            <a href="https://kahoot.it" target="_blank" rel="noopener noreferrer" class="custom-subcard border hover:border-purple-500 p-3 rounded-2xl transition hover:scale-105 flex flex-col items-center gap-2 group">
+                <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center text-lg font-black group-hover:bg-purple-500 group-hover:text-slate-950 transition">
+                    <i class="fa-solid fa-gamepad"></i>
+                </div>
+                <span class="text-xs font-bold">Kahoot!</span>
+            </a>
+
+            <!-- 🔽 BUTANG KUIZ HARIAN (DI SEBELAH KAHOOT!) 🔽 -->
+            <button type="button" onclick="toggleClientQuizModal()" class="custom-subcard border border-rose-500/30 hover:border-rose-500 bg-rose-500/10 p-3 rounded-2xl transition hover:scale-105 flex flex-col items-center gap-2 group">
+                <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-lg font-black group-hover:bg-rose-500 group-hover:text-white transition">
+                    <i class="fa-solid fa-puzzle-piece"></i>
+                </div>
+                <span class="text-xs font-bold text-rose-400 group-hover:text-rose-300">Kuiz Harian</span>
+            </button>
+        </div>
+    </div>
+
+<!-- 🔽 KAD POP-UP SOALAN KUIZ DINAMIK 🔽 -->
+<div id="clientQuizCard" class="hidden mt-6 p-5 custom-subcard border-2 border-rose-500/40 rounded-2xl text-left transition-all shadow-xl">
+    <div class="flex items-center justify-between mb-3 border-b border-slate-700/30 pb-2.5">
+        <span class="text-xs font-black text-rose-500 dark:text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
+            <i class="fa-solid fa-puzzle-piece"></i> Cabaran Minda Pusat Akses
+        </span>
+        <div class="flex items-center gap-2">
+            <button onclick="loadRandomQuiz()" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-2.5 py-1 rounded-lg transition flex items-center gap-1">
+                <i class="fa-solid fa-shuffle"></i> Soalan Seterusnya
+            </button>
+            <button onclick="toggleClientQuizModal()" class="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white font-bold px-2.5 py-1 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-800 transition">
+                Tutup ✕
+            </button>
+        </div>
+    </div>
+
+    <div id="quizContentArea">
+        <div class="flex items-center justify-between gap-2 mb-2">
+            <span id="quizCategoryBadge" class="text-[10px] font-black px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-500 border border-indigo-500/20 uppercase">
+                💻 ICT & Komputer
+            </span>
+        </div>
+        <h4 id="quizQuestionText" class="text-sm font-extrabold mb-3 text-slate-800 dark:text-slate-100 leading-relaxed">
+            Memuatkan soalan...
+        </h4>
+        <div id="quizOptionsContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+            <!-- Pilihan jawapan akan diisi secara automatik dari Bank Soalan oleh JavaScript -->
+        </div>
+        <div id="quizFeedback" class="hidden p-2.5 rounded-xl text-xs font-bold text-center"></div>
+    </div>
+</div>
+</div>
+</section>
 
         <!-- VIEW 2: DASHBOARD ADMIN -->
         <section id="view-admin" class="hidden w-full space-y-6">
@@ -633,6 +675,83 @@
         </div>
     </div>
 </div> 
+
+<!-- PUSAT KAWALAN KUIZ HARIAN ADMIN -->
+<div class="custom-card border rounded-2xl p-6 shadow-xl mt-8">
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-4 border-b border-slate-700/50 pb-3">
+        <div>
+            <h3 class="text-lg font-extrabold flex items-center gap-2 text-rose-500 dark:text-rose-400">
+                <i class="fa-solid fa-puzzle-piece"></i> Kawalan Kuiz Harian Client
+            </h3>
+            <p class="text-xs opacity-70 mt-0.5">Tampal atau bina soalan harian dari internet untuk disiarkan ke semua PC murid.</p>
+        </div>
+        <span id="activeQuizStatusTag" class="text-xs font-black px-3 py-1 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/30">
+            Status: Soalan Lalai (Default)
+        </span>
+    </div>
+
+    <form id="adminQuizForm" onsubmit="publishCustomQuiz(event)" class="space-y-4">
+        <!-- KATEGORI & TAJUK SOALAN -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+                <label class="block text-xs font-bold mb-1 opacity-80">Kategori Soalan</label>
+                <select id="adminQuizCategory" class="w-full custom-subcard border text-xs rounded-xl p-2.5 outline-none font-bold">
+                    <option value="💻 ICT & Komputer">💻 ICT & Komputer</option>
+                    <option value="🧮 Matematik">🧮 Matematik & Logik</option>
+                    <option value="🔬 Sains">🔬 Sains & Alam</option>
+                    <option value="🌍 Pengetahuan Umum">🌍 Pengetahuan Umum</option>
+                    <option value="🔤 Bahasa Inggeris">🔤 Bahasa Inggeris</option>
+                </select>
+            </div>
+            <div class="sm:col-span-2">
+                <label class="block text-xs font-bold mb-1 opacity-80">Soalan Harian (Tampal dari Internet)</label>
+                <input type="text" id="adminQuizQuestion" required placeholder="Contoh: Laman web rasmi e-pembelajaran KPM ialah..." class="w-full custom-subcard border text-xs rounded-xl px-3 py-2.5 outline-none focus:border-indigo-500">
+            </div>
+        </div>
+
+        <!-- PILIHAN JAWAPAN (A, B, C, D) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+                <label class="block text-[11px] font-bold text-indigo-400 mb-1">Pilihan A</label>
+                <input type="text" id="adminOptA" required placeholder="Jawapan A" class="w-full custom-subcard border text-xs rounded-xl px-3 py-2 outline-none">
+            </div>
+            <div>
+                <label class="block text-[11px] font-bold text-indigo-400 mb-1">Pilihan B</label>
+                <input type="text" id="adminOptB" required placeholder="Jawapan B" class="w-full custom-subcard border text-xs rounded-xl px-3 py-2 outline-none">
+            </div>
+            <div>
+                <label class="block text-[11px] font-bold text-indigo-400 mb-1">Pilihan C</label>
+                <input type="text" id="adminOptC" required placeholder="Jawapan C" class="w-full custom-subcard border text-xs rounded-xl px-3 py-2 outline-none">
+            </div>
+            <div>
+                <label class="block text-[11px] font-bold text-indigo-400 mb-1">Pilihan D</label>
+                <input type="text" id="adminOptD" required placeholder="Jawapan D" class="w-full custom-subcard border text-xs rounded-xl px-3 py-2 outline-none">
+            </div>
+        </div>
+
+        <!-- JAWAPAN BETUL & BUTANG AKSI -->
+        <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-700/50 pt-3">
+            <div class="flex items-center gap-2">
+                <label class="text-xs font-bold opacity-90">Kunci Jawapan Betul:</label>
+                <select id="adminCorrectAnswer" class="custom-subcard border text-xs font-black rounded-lg p-2 outline-none text-emerald-500">
+                    <option value="A">Pilihan A</option>
+                    <option value="B">Pilihan B</option>
+                    <option value="C">Pilihan C</option>
+                    <option value="D">Pilihan D</option>
+                </select>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="resetToDefaultQuiz()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs px-3 py-2 rounded-xl transition">
+                    🔄 Guna Bank Rawak
+                </button>
+                <button type="submit" class="bg-rose-600 hover:bg-rose-500 text-white font-black text-xs px-4 py-2 rounded-xl transition shadow-lg flex items-center gap-1.5">
+                    <i class="fa-solid fa-paper-plane"></i> Siarkan Soalan Ke Client
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
             <!-- BAHAGIAN JADUAL LOG PENGGUNAAN KOMPUTER -->
             <div class="custom-card border rounded-2xl p-6 shadow-xl mt-8">
                 <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
@@ -2411,6 +2530,236 @@ async function manualRefreshAdminData() {
         renderAdminGrid();
     }
 }, 1000);
+
+// ==========================================
+// 🧩 BANK SOALAN & ENJIN KUIZ HARIAN
+// ==========================================
+
+const quizBank = [
+    // --- KATEGORI 1: ICT & KOMPUTER ---
+    {
+        category: "💻 ICT & Komputer",
+        q: "Komponen komputer manakah yang bertindak sebagai pemproses utama atau 'otak' bagi sesebuah komputer?",
+        options: ["A) Hard Disk", "B) CPU (Pemproses)", "C) Monitor", "D) Tetikus (Mouse)"],
+        answer: "B"
+    },
+    {
+        category: "💻 ICT & Komputer",
+        q: "Kombinasi kekunci papan kekunci (keyboard) manakah yang digunakan untuk 'Copy' (Salin) teks?",
+        options: ["A) Ctrl + V", "B) Ctrl + Z", "C) Ctrl + C", "D) Ctrl + P"],
+        answer: "C"
+    },
+    {
+        category: "💻 ICT & Komputer",
+        q: "Apakah fungsi utama peranti Tetikus (Mouse) pada komputer?",
+        options: ["A) Mengeluar bunyi", "B) Memilih & mengawal kursor", "C) Menyimpan fail", "D) Mencetak kertas"],
+        answer: "B"
+    },
+    {
+        category: "💻 ICT & Komputer",
+        q: "Laman web rasmi manakah yang digunakan oleh Kementerian Pendidikan Malaysia untuk portal pembelajaran digital?",
+        options: ["A) DELIMa KPM", "B) YouTube", "C) Wikipedia", "D) Facebook"],
+        answer: "A"
+    },
+
+    // --- KATEGORI 2: MATEMATIK ---
+    {
+        category: "🧮 Matematik",
+        q: "Apakah jawapan bagi kiraan berikut: 12 × 8 = ?",
+        options: ["A) 84", "B) 96", "C) 108", "D) 92"],
+        answer: "B"
+    },
+    {
+        category: "🧮 Matematik",
+        q: "Sebuah segi empat sama mempunyai panjang sisi 5cm. Berapakah luas segi empat tersebut?",
+        options: ["A) 20 cm²", "B) 25 cm²", "C) 15 cm²", "D) 30 cm²"],
+        answer: "B"
+    },
+
+    // --- KATEGORI 3: SAINS ---
+    {
+        category: "🔬 Sains",
+        q: "Apakah planet yang terdekat dengan Matahari dalam Sistem Suria kita?",
+        options: ["A) Zuharah", "B) Utarid", "C) Marikh", "D) Bumi"],
+        answer: "B"
+    },
+    {
+        category: "🔬 Sains",
+        q: "Gas apakah yang disedut oleh manusia semasa bernafas untuk terus hidup?",
+        options: ["A) Karbon Dioksida", "B) Nitrogen", "C) Oksigen", "D) Hidrogen"],
+        answer: "C"
+    },
+
+    // --- KATEGORI 4: PENGETAHUAN UMUM ---
+    {
+        category: "🌍 Pengetahuan Umum",
+        q: "Bunga apakah yang diiktiraf sebagai Bunga Kebangsaan Malaysia?",
+        options: ["A) Bunga Mawar", "B) Bunga Raya", "C) Bunga Orkid", "D) Bunga Cempaka"],
+        answer: "B"
+    },
+    {
+        category: "🌍 Pengetahuan Umum",
+        q: "Berapakah jumlah negeri yang terdapat di dalam negara Malaysia?",
+        options: ["A) 12", "B) 13", "C) 14", "D) 15"],
+        answer: "B"
+    }
+];
+
+let currentQuiz = null;
+
+// Buka / Tutup Kad Kuiz & Muat Soalan Pertama
+function toggleClientQuizModal() {
+    const quizCard = document.getElementById('clientQuizCard');
+    if (quizCard) {
+        const isHidden = quizCard.classList.contains('hidden');
+        quizCard.classList.toggle('hidden');
+        
+        // Jika baru dibuka, jana soalan rawak
+        if (isHidden) {
+            loadRandomQuiz();
+        }
+    }
+}
+
+// Jana & Papar Soalan Rawak Dari Bank Soalan
+function loadRandomQuiz() {
+    const feedback = document.getElementById('quizFeedback');
+    if (feedback) feedback.classList.add('hidden');
+
+    // Pilih soalan secara rawak dari Bank Soalan
+    const randomIndex = Math.floor(Math.random() * quizBank.length);
+    currentQuiz = quizBank[randomIndex];
+
+    // Kemaskini Lencana Kategori & Teks Soalan
+    const badge = document.getElementById('quizCategoryBadge');
+    const qText = document.getElementById('quizQuestionText');
+    if (badge) badge.innerText = currentQuiz.category;
+    if (qText) qText.innerText = currentQuiz.q;
+
+    // Bina Butang Pilihan Jawapan A, B, C, D
+    const container = document.getElementById('quizOptionsContainer');
+    if (!container) return;
+    
+    const optionLabels = ['A', 'B', 'C', 'D'];
+    container.innerHTML = currentQuiz.options.map((optText, index) => {
+        const code = optionLabels[index];
+        return `
+            <button onclick="checkAnswer('${code}')" class="p-2.5 text-xs font-bold rounded-xl border custom-card text-left hover:border-indigo-500 transition flex items-center gap-2 text-slate-700 dark:text-slate-200">
+                <span class="w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-[10px] shrink-0 font-black">${code}</span> 
+                ${optText.replace(/^[A-D]\)\s*/, '')}
+            </button>
+        `;
+    }).join('');
+}
+
+// Semak Jawapan Murid
+function checkAnswer(selectedCode) {
+    const feedback = document.getElementById('quizFeedback');
+    if (!feedback || !currentQuiz) return;
+
+    feedback.classList.remove('hidden', 'bg-emerald-500/20', 'text-emerald-500', 'bg-rose-500/20', 'text-rose-500');
+
+    if (selectedCode === currentQuiz.answer) {
+        feedback.classList.add('bg-emerald-500/20', 'text-emerald-500');
+        feedback.innerHTML = "🎉 Tahniah! Jawapan anda TEPAT!";
+    } else {
+        feedback.classList.add('bg-rose-500/20', 'text-rose-500');
+        feedback.innerHTML = `❌ Jawapan kurang tepat. Jawapan betul ialah (${currentQuiz.answer})!`;
+    }
+}
+
+// Variable Global Untuk Menyimpan Soalan Siaran Admin
+let customAdminQuiz = null;
+
+// Fungsi Guru Menyiarkan Soalan Dari Admin Form
+function publishCustomQuiz(event) {
+    event.preventDefault();
+
+    const category = document.getElementById('adminQuizCategory').value;
+    const qText = document.getElementById('adminQuizQuestion').value.trim();
+    const optA = document.getElementById('adminOptA').value.trim();
+    const optB = document.getElementById('adminOptB').value.trim();
+    const optC = document.getElementById('adminOptC').value.trim();
+    const optD = document.getElementById('adminOptD').value.trim();
+    const correct = document.getElementById('adminCorrectAnswer').value;
+
+    if(!qText || !optA || !optB || !optC || !optD) {
+        alert("Sila lengkapkan soalan dan semua pilihan jawapan A, B, C, D!");
+        return;
+    }
+
+    // Simpan data soalan khas guru
+    customAdminQuiz = {
+        category: category,
+        q: qText,
+        options: [`A) ${optA}`, `B) ${optB}`, `C) ${optC}`, `D) ${optD}`],
+        answer: correct
+    };
+
+    // Kemaskini tag status Admin
+    const statusTag = document.getElementById('activeQuizStatusTag');
+    if(statusTag) {
+        statusTag.className = "text-xs font-black px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/30";
+        statusTag.innerText = "Status: Soalan Kustom Disiarkan 🚀";
+    }
+
+    // Hantar Isyarat Real-Time Ke Semua PC Client (Guna Supabase / Channel)
+    if (typeof sendBroadcastSignal === 'function') {
+        sendBroadcastSignal('UPDATE_QUIZ', customAdminQuiz);
+    }
+
+    alert("🎉 Soalan Harian berjaya disiarkan ke semua PC Client!");
+}
+
+// Tetap Semula Ke Bank Soalan Rawak
+function resetToDefaultQuiz() {
+    customAdminQuiz = null;
+    document.getElementById('adminQuizForm').reset();
+
+    const statusTag = document.getElementById('activeQuizStatusTag');
+    if(statusTag) {
+        statusTag.className = "text-xs font-black px-3 py-1 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/30";
+        statusTag.innerText = "Status: Soalan Lalai (Default)";
+    }
+
+    alert("Sistem dikembalikan kepada Bank Soalan Rawak.");
+}
+
+// Kemaskini Fungsi `loadRandomQuiz()` Supaya Utamakan Soalan Admin Jika Ada
+function loadRandomQuiz() {
+    const feedback = document.getElementById('quizFeedback');
+    if (feedback) feedback.classList.add('hidden');
+
+    // Jika Guru ada siar soalan kustom, guna soalan kustom tersebut
+    if (customAdminQuiz) {
+        currentQuiz = customAdminQuiz;
+    } else {
+        // Jika tiada, pilih rawak dari bank soalan
+        const randomIndex = Math.floor(Math.random() * quizBank.length);
+        currentQuiz = quizBank[randomIndex];
+    }
+
+    // Kemaskini Lencana Kategori & Teks Soalan di Client
+    const badge = document.getElementById('quizCategoryBadge');
+    const qText = document.getElementById('quizQuestionText');
+    if (badge) badge.innerText = currentQuiz.category;
+    if (qText) qText.innerText = currentQuiz.q;
+
+    // Bina Butang Pilihan Jawapan A, B, C, D
+    const container = document.getElementById('quizOptionsContainer');
+    if (!container) return;
+    
+    const optionLabels = ['A', 'B', 'C', 'D'];
+    container.innerHTML = currentQuiz.options.map((optText, index) => {
+        const code = optionLabels[index];
+        return `
+            <button onclick="checkAnswer('${code}')" class="p-2.5 text-xs font-bold rounded-xl border custom-card text-left hover:border-indigo-500 transition flex items-center gap-2 text-slate-700 dark:text-slate-200">
+                <span class="w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-[10px] shrink-0 font-black">${code}</span> 
+                ${optText.replace(/^[A-D]\)\s*/, '')}
+            </button>
+        `;
+    }).join('');
+}
     </script>
 </body>
 </html>
