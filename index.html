@@ -2607,49 +2607,18 @@ const quizBank = [
 
 let currentQuiz = null;
 
-// Buka / Tutup Kad Kuiz & Muat Soalan Pertama
-function toggleClientQuizModal() {
+// Buka / Tutup Kad Kuiz di Client & Muat Soalan Terkini
+async function toggleClientQuizModal() {
     const quizCard = document.getElementById('clientQuizCard');
     if (quizCard) {
         const isHidden = quizCard.classList.contains('hidden');
         quizCard.classList.toggle('hidden');
         
-        // Jika baru dibuka, jana soalan rawak
+        // Jika baru dibuka, muat soalan (Sama ada dari DB Supabase atau Bank Rawak)
         if (isHidden) {
-            loadRandomQuiz();
+            await loadRandomQuiz();
         }
     }
-}
-
-// Jana & Papar Soalan Rawak Dari Bank Soalan
-function loadRandomQuiz() {
-    const feedback = document.getElementById('quizFeedback');
-    if (feedback) feedback.classList.add('hidden');
-
-    // Pilih soalan secara rawak dari Bank Soalan
-    const randomIndex = Math.floor(Math.random() * quizBank.length);
-    currentQuiz = quizBank[randomIndex];
-
-    // Kemaskini Lencana Kategori & Teks Soalan
-    const badge = document.getElementById('quizCategoryBadge');
-    const qText = document.getElementById('quizQuestionText');
-    if (badge) badge.innerText = currentQuiz.category;
-    if (qText) qText.innerText = currentQuiz.q;
-
-    // Bina Butang Pilihan Jawapan A, B, C, D
-    const container = document.getElementById('quizOptionsContainer');
-    if (!container) return;
-    
-    const optionLabels = ['A', 'B', 'C', 'D'];
-    container.innerHTML = currentQuiz.options.map((optText, index) => {
-        const code = optionLabels[index];
-        return `
-            <button onclick="checkAnswer('${code}')" class="p-2.5 text-xs font-bold rounded-xl border custom-card text-left hover:border-indigo-500 transition flex items-center gap-2 text-slate-700 dark:text-slate-200">
-                <span class="w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-[10px] shrink-0 font-black">${code}</span> 
-                ${optText.replace(/^[A-D]\)\s*/, '')}
-            </button>
-        `;
-    }).join('');
 }
 
 // Semak Jawapan Murid
@@ -2668,15 +2637,8 @@ function checkAnswer(selectedCode) {
     }
 }
 
-// ==========================================
-// 🧩 PENGURUSAN KUIZ HARIAN (ADMIN & CLIENT)
-// ==========================================
-
-// Semak jika ada soalan kustom yang tersimpan di localStorage
-let customAdminQuiz = JSON.parse(localStorage.getItem('ePusatAkses_CustomQuiz')) || null;
-
-// 1. FUNGSI GURU MENYIARKAN SOALAN DARI ADMIN FORM
-function publishCustomQuiz(event) {
+// 1. GURU SIAR SOALAN DARI ADMIN (SIMPAN KE SUPABASE DATABASE)
+async function publishCustomQuiz(event) {
     event.preventDefault();
 
     const category = document.getElementById('adminQuizCategory').value;
@@ -2692,123 +2654,90 @@ function publishCustomQuiz(event) {
         return;
     }
 
-    const quizPayload = {
-        category: category,
-        q: qText,
-        options: [`A) ${optA}`, `B) ${optB}`, `C) ${optC}`, `D) ${optD}`],
-        answer: correct
-    };
-
-    // A. Simpan ke pembolehubah global & localStorage
-    customAdminQuiz = quizPayload;
-    localStorage.setItem('ePusatAkses_CustomQuiz', JSON.stringify(quizPayload));
-
-    // B. Kemaskini paparan Client serta-merta
-    loadRandomQuiz();
-
-    // C. HANTAR VIA SUPABASE CHANNEL (jika ada sambungan)
     try {
-        if (typeof pc_sessions_channel !== 'undefined' && pc_sessions_channel) {
-            pc_sessions_channel.send({
-                type: 'broadcast',
-                event: 'NEW_QUIZ_PUBLISHED',
-                payload: quizPayload
+        // Simpan / Kemaskini Rekod ID 1 Dalam Database Supabase
+        const { error } = await supabaseClient
+            .from('daily_quiz')
+            .upsert({
+                id: 1,
+                category: category,
+                question: qText,
+                opt_a: optA,
+                opt_b: optB,
+                opt_c: optC,
+                opt_d: optD,
+                answer: correct,
+                updated_at: new Date()
             });
-        }
+
+        if (error) throw error;
+
+        // Kemaskini status tag Admin & muat semula paparan kuiz
+        updateQuizStatusTag(true);
+        await loadRandomQuiz();
+
+        alert("🎉 Soalan Harian berjaya disiarkan dari telefon ke semua PC Client!");
+
     } catch (err) {
-        console.log("Supabase broadcast offline, menggunakan localStorage fallback.");
+        console.error("Ralat simpan kuiz:", err);
+        alert("Ralat semasa menyiarkan soalan: " + err.message + "\n\n(Sila pastikan jadual 'daily_quiz' telah dicipta di Supabase SQL Editor)");
     }
-
-    // D. Kemaskini tag status Admin
-    updateQuizStatusTag(true);
-
-    alert("🎉 Soalan Harian berjaya disiarkan! Tekan butang 'Kuiz Harian' pada Client untuk melihatnya.");
 }
 
-// 2. TETAP SEMULA KE BANK SOALAN RAWAK
-function resetToDefaultQuiz() {
-    customAdminQuiz = null;
-    localStorage.removeItem('ePusatAkses_CustomQuiz');
-    
-    if(document.getElementById('adminQuizForm')) {
-        document.getElementById('adminQuizForm').reset();
-    }
-
-    loadRandomQuiz();
-
+// 2. PADAM SOALAN KUSTOM / KEMBALI KE DEFAULT
+async function resetToDefaultQuiz() {
     try {
-        if (typeof pc_sessions_channel !== 'undefined' && pc_sessions_channel) {
-            pc_sessions_channel.send({
-                type: 'broadcast',
-                event: 'RESET_QUIZ_DEFAULT'
-            });
-        }
-    } catch (err) {}
-
-    updateQuizStatusTag(false);
-    alert("Sistem dikembalikan kepada Bank Soalan Rawak.");
-}
-
-// Kemaskini Tag Status di Admin
-function updateQuizStatusTag(isCustom) {
-    const statusTag = document.getElementById('activeQuizStatusTag');
-    if(statusTag) {
-        if(isCustom) {
-            statusTag.className = "text-xs font-black px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/30";
-            statusTag.innerText = "Status: Soalan Kustom Disiarkan 🚀";
-        } else {
-            statusTag.className = "text-xs font-black px-3 py-1 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/30";
-            statusTag.innerText = "Status: Soalan Lalai (Default)";
-        }
+        await supabaseClient.from('daily_quiz').delete().eq('id', 1);
+        if(document.getElementById('adminQuizForm')) document.getElementById('adminQuizForm').reset();
+        
+        updateQuizStatusTag(false);
+        await loadRandomQuiz();
+        alert("Sistem dikembalikan kepada Bank Soalan Rawak.");
+    } catch(err) {
+        alert("Ralat reset kuiz: " + err.message);
     }
 }
 
-// 3. LISTENERS SUPABASE
-function initQuizRealtime() {
-    if (typeof pc_sessions_channel !== 'undefined' && pc_sessions_channel) {
-        pc_sessions_channel.on('broadcast', { event: 'NEW_QUIZ_PUBLISHED' }, payload => {
-            if (payload && payload.payload) {
-                customAdminQuiz = payload.payload;
-                localStorage.setItem('ePusatAkses_CustomQuiz', JSON.stringify(customAdminQuiz));
-                loadRandomQuiz();
-            }
-        });
-
-        pc_sessions_channel.on('broadcast', { event: 'RESET_QUIZ_DEFAULT' }, () => {
-            customAdminQuiz = null;
-            localStorage.removeItem('ePusatAkses_CustomQuiz');
-            loadRandomQuiz();
-        });
-    }
-}
-setTimeout(initQuizRealtime, 2000);
-
-// 4. FUNGSI PAPAR SOALAN DI CLIENT
-function loadRandomQuiz() {
+// 3. MUAT SOALAN DI CLIENT (AMBIL DARI SUPABASE DATABASE / FALLBACK TO BANK)
+async function loadRandomQuiz() {
     const feedback = document.getElementById('quizFeedback');
     if (feedback) feedback.classList.add('hidden');
 
-    // Semak sekali lagi dari localStorage jika customAdminQuiz kosong
-    if (!customAdminQuiz) {
-        const saved = localStorage.getItem('ePusatAkses_CustomQuiz');
-        if (saved) customAdminQuiz = JSON.parse(saved);
-    }
+    try {
+        // Tarik soalan kustom dari Supabase Database
+        const { data, error } = await supabaseClient
+            .from('daily_quiz')
+            .select('*')
+            .eq('id', 1)
+            .maybeSingle();
 
-    // Utamakan Soalan Admin Jika Ada
-    if (customAdminQuiz) {
-        currentQuiz = customAdminQuiz;
-    } else {
+        if (data) {
+            currentQuiz = {
+                category: data.category,
+                q: data.question,
+                options: [`A) ${data.opt_a}`, `B) ${data.opt_b}`, `C) ${data.opt_c}`, `D) ${data.opt_d}`],
+                answer: data.answer
+            };
+            updateQuizStatusTag(true);
+        } else {
+            // Jika tiada soalan kustom dalam DB, pilih secara rawak dari Bank Soalan Statik
+            const randomIndex = Math.floor(Math.random() * quizBank.length);
+            currentQuiz = quizBank[randomIndex];
+            updateQuizStatusTag(false);
+        }
+    } catch (err) {
+        // Fallback jika talian internet perlahan/offline
         const randomIndex = Math.floor(Math.random() * quizBank.length);
         currentQuiz = quizBank[randomIndex];
     }
 
-    // Kemaskini Lencana Kategori & Teks Soalan di Client
+    // Paparkan Kategori & Soalan
     const badge = document.getElementById('quizCategoryBadge');
     const qText = document.getElementById('quizQuestionText');
     if (badge) badge.innerText = currentQuiz.category;
     if (qText) qText.innerText = currentQuiz.q;
 
-    // Bina Butang Pilihan Jawapan A, B, C, D
+    // Bina Butang Jawapan A, B, C, D
     const container = document.getElementById('quizOptionsContainer');
     if (!container) return;
     
@@ -2823,6 +2752,20 @@ function loadRandomQuiz() {
         `;
     }).join('');
 }
-    </script>
+
+// Kemaskini Lencana Status Admin
+function updateQuizStatusTag(isCustom) {
+    const statusTag = document.getElementById('activeQuizStatusTag');
+    if(statusTag) {
+        if(isCustom) {
+            statusTag.className = "text-xs font-black px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/30";
+            statusTag.innerText = "Status: Soalan Kustom Disiarkan 🚀";
+        } else {
+            statusTag.className = "text-xs font-black px-3 py-1 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/30";
+            statusTag.innerText = "Status: Soalan Lalai (Default)";
+        }
+    }
+}
+</script>
 </body>
 </html>
